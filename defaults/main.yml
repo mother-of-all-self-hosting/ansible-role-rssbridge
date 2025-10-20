@@ -1,0 +1,208 @@
+# SPDX-FileCopyrightText: 2023 - 2024 Nikita Chernyi
+# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
+# SPDX-FileCopyrightText: 2025 MASH project contributors
+# SPDX-FileCopyrightText: 2025 Suguru Hirahara
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+# Project source code URL: https://github.com/C4illin/ConvertX
+
+convertx_enabled: true
+
+convertx_identifier: convertx
+convertx_base_path: "/{{ convertx_identifier }}"
+convertx_data_path: "{{ convertx_base_path }}/data"
+
+# renovate: datasource=docker depName=c4illin/convertx versioning=semver
+convertx_version: v0.15.1
+
+convertx_uid: ''
+convertx_gid: ''
+
+convertx_scheme: https
+
+# The hostname at which ConvertX is served.
+convertx_hostname: ''
+
+# The path at which ConvertX is exposed.
+# This value must be `/`, as the subpath can only be specified with "convertx_environment_variables_webroot".
+convertx_path_prefix: /
+
+convertx_container_image: "{{ convertx_container_image_registry_prefix }}c4illin/convertx:{{ convertx_container_image_tag }}"
+convertx_container_image_tag: "{{ convertx_version }}"
+convertx_container_image_registry_prefix: "{{ convertx_container_image_registry_prefix_upstream }}"
+convertx_container_image_registry_prefix_upstream: "{{ convertx_container_image_registry_prefix_upstream_default }}"
+convertx_container_image_registry_prefix_upstream_default: docker.io/
+convertx_container_image_force_pull: "{{ convertx_container_image.endswith(':latest') }}"
+
+convertx_container_image_self_build: false
+convertx_container_image_self_build_name: "c4illin/convertx:{{ convertx_container_image_self_build_repo_version }}" # the image name must be lowercase
+convertx_container_image_self_build_repo: "https://github.com/C4illin/ConvertX.git"
+convertx_container_image_self_build_repo_version: "{{ convertx_version if convertx_version != 'latest' else 'main' }}"
+convertx_container_image_self_build_src_files_path: "{{ convertx_base_path }}/docker-src"
+
+# Controls whether the container exposes its HTTP port (tcp/80 in the container).
+#
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
+convertx_container_http_host_bind_port: ''
+
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+convertx_container_network: "{{ convertx_identifier }}"
+
+# The port number in the container
+convertx_container_http_port: 3000
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to another reverse proxy, which runs in a different container network.
+convertx_container_additional_networks: "{{ convertx_container_additional_networks_auto + convertx_container_additional_networks_custom }}"
+convertx_container_additional_networks_auto: []
+convertx_container_additional_networks_custom: []
+
+# A list of additional "volumes" to mount in the container.
+# This list gets populated dynamically at runtime. You can provide a different default value,
+# if you wish to mount your own files into the container.
+# Contains definition objects like this: `{"type": "bind", "src": "/outside", "dst": "/inside", "options": "readonly"}.
+# See the `--mount` documentation for the `docker run` command.
+convertx_container_additional_volumes: "{{ convertx_container_additional_volumes_auto + convertx_container_additional_volumes_custom }}"
+convertx_container_additional_volumes_auto: []
+convertx_container_additional_volumes_custom: []
+
+# convertx_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
+# See `../templates/labels.j2` for details.
+#
+# To inject your own other container labels, see `convertx_container_labels_additional_labels`.
+convertx_container_labels_traefik_enabled: true
+convertx_container_labels_traefik_docker_network: "{{ convertx_container_network }}"
+convertx_container_labels_traefik_hostname: "{{ convertx_hostname }}"
+# The path prefix must either be `/` or not end with a slash (e.g. `/convertx`).
+convertx_container_labels_traefik_path_prefix: "{{ convertx_path_prefix }}"
+convertx_container_labels_traefik_rule: "Host(`{{ convertx_container_labels_traefik_hostname }}`){% if convertx_container_labels_traefik_path_prefix != '/' %} && PathPrefix(`{{ convertx_container_labels_traefik_path_prefix }}`){% endif %}"
+convertx_container_labels_traefik_priority: 0
+convertx_container_labels_traefik_entrypoints: web-secure
+convertx_container_labels_traefik_tls: "{{ convertx_container_labels_traefik_entrypoints != 'web' }}"
+convertx_container_labels_traefik_tls_certResolver: default  # noqa var-naming
+
+# Controls which additional headers to attach to all HTTP requests.
+# To add your own custom request headers, use `convertx_container_labels_traefik_additional_request_headers_custom`
+convertx_container_labels_traefik_additional_request_headers: "{{ convertx_container_labels_traefik_additional_request_headers_auto | combine(convertx_container_labels_traefik_additional_request_headers_custom) }}"
+convertx_container_labels_traefik_additional_request_headers_auto: {}
+convertx_container_labels_traefik_additional_request_headers_custom: {}
+
+# Controls which additional headers to attach to all HTTP responses.
+# To add your own custom response headers, use `convertx_container_labels_traefik_additional_response_headers_custom`
+convertx_container_labels_traefik_additional_response_headers: "{{ convertx_container_labels_traefik_additional_response_headers_auto | combine(convertx_container_labels_traefik_additional_response_headers_custom) }}"
+convertx_container_labels_traefik_additional_response_headers_auto: |
+  {{
+    {}
+    | combine ({'X-XSS-Protection': convertx_http_header_xss_protection} if convertx_http_header_xss_protection else {})
+    | combine ({'X-Content-Type-Options': convertx_http_header_content_type_options} if convertx_http_header_content_type_options else {})
+    | combine ({'Content-Security-Policy': convertx_http_header_content_security_policy} if convertx_http_header_content_security_policy else {})
+    | combine ({'Permissions-Policy': convertx_http_header_permissions_policy} if convertx_http_header_permissions_policy else {})
+    | combine ({'Strict-Transport-Security': convertx_http_header_strict_transport_security} if convertx_http_header_strict_transport_security and convertx_container_labels_traefik_tls else {})
+  }}
+convertx_container_labels_traefik_additional_response_headers_custom: {}
+
+# convertx_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `../templates/labels.j2` for details.
+#
+# Example:
+# convertx_container_labels_additional_labels: |
+#   my.label=1
+#   another.label="here"
+convertx_container_labels_additional_labels: ''
+
+# A list of extra arguments to pass to the container (`docker run` command)
+convertx_container_extra_arguments: []
+
+# Specifies the value of the `X-XSS-Protection` header
+# Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.
+#
+# Learn more about it is here:
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+# - https://portswigger.net/web-security/cross-site-scripting/reflected
+convertx_http_header_xss_protection: "1; mode=block"
+
+# Specifies the value of the `X-Content-Type-Options` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+convertx_http_header_content_type_options: nosniff
+
+# Specifies the value of the `Content-Security-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+convertx_http_header_content_security_policy: frame-ancestors 'self'
+
+# Specifies the value of the `Permissions-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy
+convertx_http_header_permissions_policy: "{{ 'interest-cohort=()' if convertx_floc_optout_enabled else '' }}"
+
+# Specifies the value of the `Strict-Transport-Security` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+convertx_http_header_strict_transport_security: "max-age=31536000; includeSubDomains{{ '; preload' if convertx_hsts_preload_enabled else '' }}"
+
+# Controls whether to send a "Permissions-Policy interest-cohort=();" header along with all responses
+#
+# Learn more about what it is here:
+# - https://www.eff.org/deeplinks/2021/03/googles-floc-terrible-idea
+# - https://paramdeo.com/blog/opting-your-website-out-of-googles-floc-network
+# - https://amifloced.org/
+#
+# Of course, a better solution is to just stop using browsers (like Chrome), which participate in such tracking practices.
+# See: `convertx_http_header_permissions_policy`
+convertx_floc_optout_enabled: true
+
+# Controls if HSTS preloading is enabled
+#
+# In its strongest and recommended form, the [HSTS policy](https://www.chromium.org/hsts) includes all subdomains, and
+# indicates a willingness to be "preloaded" into browsers:
+# `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+# For more information visit:
+# - https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+# - https://hstspreload.org/#opt-in
+# See: `convertx_http_header_strict_transport_security`
+convertx_hsts_preload_enabled: false
+
+# List of systemd services that the ConvertX systemd service depends on
+convertx_systemd_required_services_list: "{{ convertx_systemd_required_services_list_default + convertx_systemd_required_services_list_auto + convertx_systemd_required_services_list_custom }}"
+convertx_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+convertx_systemd_required_services_list_auto: []
+convertx_systemd_required_services_list_custom: []
+
+# List of systemd services that the ConvertX systemd service wants
+convertx_systemd_wanted_services_list: "{{ convertx_systemd_wanted_services_list_default + convertx_systemd_wanted_services_list_auto + convertx_systemd_wanted_services_list_custom }}"
+convertx_systemd_wanted_services_list_default: []
+convertx_systemd_wanted_services_list_auto: []
+convertx_systemd_wanted_services_list_custom: []
+
+# Specify a long and secret string used to sign the JSON Web Token
+convertx_environment_variables_jwt_secret: ""
+
+# Control whether account registration is enabled
+convertx_environment_variables_account_registration: false
+
+# Control whether HTTP connections is allowed
+# Only set this to true locally
+convertx_environment_variables_http_allowed: false
+
+# Control whether unauthenticated users is allowed to use the service
+# Only set this to true locally
+convertx_environment_variables_allow_unauthenticated: false
+
+# Specify how many hours to keep files before deleting them
+# Set to 0 to disable it
+convertx_environment_variables_auto_delete_every_n_hours: 24
+
+# Specify the address to the root path
+# Setting this to "/convert" will serve the website on "{{ convertx_hostname }}/convert/"
+convertx_environment_variables_webroot: ''
+
+# Specify arguments to pass to ffmpeg, e.g. -preset veryfast
+convertx_environment_variables_ffmpeg_args: ""
+
+# Control whether the history page is hidden
+convertx_environment_variables_hide_history: false
+
+# Additional environment variables.
+convertx_environment_variables_additional_variables: ''
