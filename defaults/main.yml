@@ -18,13 +18,13 @@ rssbridge_data_path: "{{ rssbridge_base_path }}/data"
 # renovate: datasource=docker depName=c4illin/rssbridge versioning=semver
 rssbridge_version: v0.15.1
 
-rssbridge_uid: ''
-rssbridge_gid: ''
+rssbridge_uid: ""
+rssbridge_gid: ""
 
 rssbridge_scheme: https
 
 # The hostname at which RSS-Bridge is served.
-rssbridge_hostname: ''
+rssbridge_hostname: ""
 
 # The path at which RSS-Bridge is exposed.
 # This value must be `/`, as the subpath can only be specified with "rssbridge_environment_variables_webroot".
@@ -46,7 +46,7 @@ rssbridge_container_image_self_build_src_files_path: "{{ rssbridge_base_path }}/
 # Controls whether the container exposes its HTTP port (tcp/80 in the container).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
-rssbridge_container_http_host_bind_port: ''
+rssbridge_container_http_host_bind_port: ""
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 rssbridge_container_network: "{{ rssbridge_identifier }}"
@@ -112,7 +112,7 @@ rssbridge_container_labels_traefik_additional_response_headers_custom: {}
 # rssbridge_container_labels_additional_labels: |
 #   my.label=1
 #   another.label="here"
-rssbridge_container_labels_additional_labels: ''
+rssbridge_container_labels_additional_labels: ""
 
 # A list of extra arguments to pass to the container (`docker run` command)
 rssbridge_container_extra_arguments: []
@@ -177,4 +177,4 @@ rssbridge_systemd_wanted_services_list_auto: []
 rssbridge_systemd_wanted_services_list_custom: []
 
 # Additional environment variables.
-rssbridge_environment_variables_additional_variables: ''
+rssbridge_environment_variables_additional_variables: ""
