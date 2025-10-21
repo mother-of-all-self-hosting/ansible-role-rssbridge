@@ -20,9 +20,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 This is an [Ansible](https://www.ansible.com/) role which installs [RSS-Bridge](https://rss-bridge.org/bridge01/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-RSS-Bridge is a self-hosted online file converter which supports a lot of different formats for pictures, video, images, document files, etc.
+RSS-Bridge is the PHP web application which generates web feeds for websites that do not have one.
 
-See the project's [documentation](https://github.com/RSS-Bridge/rss-bridge/blob/master/README.md) to learn what RSS-Bridge does and why it might be useful to you.
+See the project's [documentation](https://rss-bridge.github.io/rss-bridge/) to learn what RSS-Bridge does and why it might be useful to you.
 
 ## Adjusting the playbook configuration
 
@@ -96,9 +96,7 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 ## Usage
 
-After running the command for installation, RSS-Bridge becomes available at the specified hostname like `https://example.com`. To use it, open the URL on the browser and create an account.
-
-Note that it is not available to restore the password if it is lost. In this case, you will need to uninstall the service and reinstall it to start it over.
+After running the command for installation, RSS-Bridge becomes available at the specified hostname like `https://example.com`. To use it, open the URL on the browser and log in to the service if authentication is enabled.
 
 ## Troubleshooting
 
