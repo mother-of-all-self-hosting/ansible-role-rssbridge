@@ -18,11 +18,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Setting up RSS-Bridge
 
-This is an [Ansible](https://www.ansible.com/) role which installs [RSS-Bridge](https://github.com/C4illin/RSS-Bridge) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [RSS-Bridge](https://rss-bridge.org/bridge01/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 RSS-Bridge is a self-hosted online file converter which supports a lot of different formats for pictures, video, images, document files, etc.
 
-See the project's [documentation](https://github.com/C4illin/RSS-Bridge/blob/main/README.md) to learn what RSS-Bridge does and why it might be useful to you.
+See the project's [documentation](https://github.com/RSS-Bridge/rss-bridge/blob/master/README.md) to learn what RSS-Bridge does and why it might be useful to you.
 
 ## Adjusting the playbook configuration
 

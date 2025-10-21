@@ -7,7 +7,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-# Project source code URL: https://github.com/C4illin/RSS-Bridge
+# Project source code URL: https://github.com/RSS-Bridge/rss-bridge
 
 rssbridge_enabled: true
 

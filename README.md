@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # RSS-Bridge Ansible role
 
-This is an [Ansible](https://www.ansible.com/) role which installs [RSS-Bridge](https://github.com/C4illin/RSS-Bridge) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [RSS-Bridge](https://rss-bridge.org/bridge01/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 This role *implicitly* depends on:
 
