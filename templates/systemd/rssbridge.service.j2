@@ -23,13 +23,20 @@ Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop -t {{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ rssbridge_identifier }} 2>/dev/null || true'
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ rssbridge_identifier }} 2>/dev/null || true'
 
+{#
+  These capabilities are necessary to avoid the `unable to bind listening socket` error
+#}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --rm \
       --name={{ rssbridge_identifier }} \
       --log-driver=none \
       --user={{ rssbridge_uid }}:{{ rssbridge_gid }} \
       --cap-drop=ALL \
-      --read-only \
+      --cap-add=CAP_DAC_OVERRIDE \
+      --cap-add=CHOWN \
+      --cap-add=SETUID \
+      --cap-add=SETGID \
+      --cap-add=NET_BIND_SERVICE \
       --network={{ rssbridge_container_network }} \
       {% if rssbridge_container_http_host_bind_port %}
       -p {{ rssbridge_container_http_host_bind_port }}:{{ rssbridge_container_http_port }} \
