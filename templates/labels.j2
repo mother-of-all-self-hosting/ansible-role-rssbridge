@@ -5,55 +5,55 @@ SPDX-FileCopyrightText: 2025 Suguru Hirahara
 SPDX-License-Identifier: AGPL-3.0-or-later
 #}
 
-{% if convertx_container_labels_traefik_enabled %}
+{% if rssbridge_container_labels_traefik_enabled %}
 traefik.enable=true
 
-{% if convertx_container_labels_traefik_docker_network %}
-traefik.docker.network={{ convertx_container_labels_traefik_docker_network }}
+{% if rssbridge_container_labels_traefik_docker_network %}
+traefik.docker.network={{ rssbridge_container_labels_traefik_docker_network }}
 {% endif %}
 
 {% set middlewares = [] %}
 
-{% if convertx_container_labels_traefik_path_prefix != '/' %}
-traefik.http.middlewares.{{ convertx_identifier }}-slashless-redirect.redirectregex.regex=^({{ convertx_container_labels_traefik_path_prefix | quote }})$
-traefik.http.middlewares.{{ convertx_identifier }}-slashless-redirect.redirectregex.replacement=${1}/
-{% set middlewares = middlewares + [convertx_identifier + '-slashless-redirect'] %}
+{% if rssbridge_container_labels_traefik_path_prefix != '/' %}
+traefik.http.middlewares.{{ rssbridge_identifier }}-slashless-redirect.redirectregex.regex=^({{ rssbridge_container_labels_traefik_path_prefix | quote }})$
+traefik.http.middlewares.{{ rssbridge_identifier }}-slashless-redirect.redirectregex.replacement=${1}/
+{% set middlewares = middlewares + [rssbridge_identifier + '-slashless-redirect'] %}
 {% endif %}
 
-{% if convertx_container_labels_traefik_path_prefix != '/' %}
-traefik.http.middlewares.{{ convertx_identifier }}-strip-prefix.stripprefix.prefixes={{ convertx_container_labels_traefik_path_prefix }}
-{% set middlewares = middlewares + [convertx_identifier + '-strip-prefix'] %}
+{% if rssbridge_container_labels_traefik_path_prefix != '/' %}
+traefik.http.middlewares.{{ rssbridge_identifier }}-strip-prefix.stripprefix.prefixes={{ rssbridge_container_labels_traefik_path_prefix }}
+{% set middlewares = middlewares + [rssbridge_identifier + '-strip-prefix'] %}
 {% endif %}
 
-{% if convertx_container_labels_traefik_additional_request_headers.keys() | length > 0 %}
-{% for name, value in convertx_container_labels_traefik_additional_request_headers.items() %}
-traefik.http.middlewares.{{ convertx_identifier }}-add-request-headers.headers.customrequestheaders.{{ name }}={{ value }}
+{% if rssbridge_container_labels_traefik_additional_request_headers.keys() | length > 0 %}
+{% for name, value in rssbridge_container_labels_traefik_additional_request_headers.items() %}
+traefik.http.middlewares.{{ rssbridge_identifier }}-add-request-headers.headers.customrequestheaders.{{ name }}={{ value }}
 {% endfor %}
-{% set middlewares = middlewares + [convertx_identifier + '-add-request-headers'] %}
+{% set middlewares = middlewares + [rssbridge_identifier + '-add-request-headers'] %}
 {% endif %}
 
-{% if convertx_container_labels_traefik_additional_response_headers.keys() | length > 0 %}
-{% for name, value in convertx_container_labels_traefik_additional_response_headers.items() %}
-traefik.http.middlewares.{{ convertx_identifier }}-add-response-headers.headers.customresponseheaders.{{ name }}={{ value }}
+{% if rssbridge_container_labels_traefik_additional_response_headers.keys() | length > 0 %}
+{% for name, value in rssbridge_container_labels_traefik_additional_response_headers.items() %}
+traefik.http.middlewares.{{ rssbridge_identifier }}-add-response-headers.headers.customresponseheaders.{{ name }}={{ value }}
 {% endfor %}
-{% set middlewares = middlewares + [convertx_identifier + '-add-response-headers'] %}
+{% set middlewares = middlewares + [rssbridge_identifier + '-add-response-headers'] %}
 {% endif %}
 
-traefik.http.routers.{{ convertx_identifier }}.rule={{ convertx_container_labels_traefik_rule }}
-{% if convertx_container_labels_traefik_priority | int > 0 %}
-traefik.http.routers.{{ convertx_identifier }}.priority={{ convertx_container_labels_traefik_priority }}
+traefik.http.routers.{{ rssbridge_identifier }}.rule={{ rssbridge_container_labels_traefik_rule }}
+{% if rssbridge_container_labels_traefik_priority | int > 0 %}
+traefik.http.routers.{{ rssbridge_identifier }}.priority={{ rssbridge_container_labels_traefik_priority }}
 {% endif %}
-traefik.http.routers.{{ convertx_identifier }}.service={{ convertx_identifier }}
+traefik.http.routers.{{ rssbridge_identifier }}.service={{ rssbridge_identifier }}
 {% if middlewares | length > 0 %}
-traefik.http.routers.{{ convertx_identifier }}.middlewares={{ middlewares | join(',') }}
+traefik.http.routers.{{ rssbridge_identifier }}.middlewares={{ middlewares | join(',') }}
 {% endif %}
-traefik.http.routers.{{ convertx_identifier }}.entrypoints={{ convertx_container_labels_traefik_entrypoints }}
-traefik.http.routers.{{ convertx_identifier }}.tls={{ convertx_container_labels_traefik_tls | to_json }}
-{% if convertx_container_labels_traefik_tls %}
-traefik.http.routers.{{ convertx_identifier }}.tls.certResolver={{ convertx_container_labels_traefik_tls_certResolver }}
-{% endif %}
-
-traefik.http.services.{{ convertx_identifier }}.loadbalancer.server.port={{ convertx_container_http_port }}
+traefik.http.routers.{{ rssbridge_identifier }}.entrypoints={{ rssbridge_container_labels_traefik_entrypoints }}
+traefik.http.routers.{{ rssbridge_identifier }}.tls={{ rssbridge_container_labels_traefik_tls | to_json }}
+{% if rssbridge_container_labels_traefik_tls %}
+traefik.http.routers.{{ rssbridge_identifier }}.tls.certResolver={{ rssbridge_container_labels_traefik_tls_certResolver }}
 {% endif %}
 
-{{ convertx_container_labels_additional_labels }}
+traefik.http.services.{{ rssbridge_identifier }}.loadbalancer.server.port={{ rssbridge_container_http_port }}
+{% endif %}
+
+{{ rssbridge_container_labels_additional_labels }}

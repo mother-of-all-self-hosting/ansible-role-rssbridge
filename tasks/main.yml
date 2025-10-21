@@ -4,24 +4,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Perform ConvertX installation tasks
-  when: convertx_enabled | bool
+- name: Perform RSS-Bridge installation tasks
+  when: rssbridge_enabled | bool
   tags:
     - setup-all
-    - setup-convertx
+    - setup-rssbridge
     - install-all
-    - install-convertx
+    - install-rssbridge
   block:
-    - name: Validate ConvertX configuration
+    - name: Validate RSS-Bridge configuration
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-    - name: Install ConvertX
+    - name: Install RSS-Bridge
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
-- name: Perform ConvertX uninstallation tasks
-  when: not convertx_enabled | bool
+- name: Perform RSS-Bridge uninstallation tasks
+  when: not rssbridge_enabled | bool
   tags:
     - setup-all
-    - setup-convertx
+    - setup-rssbridge
   block:
-    - name: Uninstall ConvertX
+    - name: Uninstall RSS-Bridge
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"

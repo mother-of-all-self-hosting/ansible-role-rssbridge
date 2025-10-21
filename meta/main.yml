@@ -2,9 +2,9 @@
 galaxy_info:
   author: Suguru Hirahara
   company: progressiv
-  role_name: convertx
+  role_name: rssbridge
   namespace: progressiv
-  description: ConvertX
+  description: RSS-Bridge
   platforms:
     - name: Debian
       versions:

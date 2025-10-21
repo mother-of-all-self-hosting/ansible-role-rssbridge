@@ -4,82 +4,82 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Check existence of ConvertX systemd service
+- name: Check existence of RSS-Bridge systemd service
   ansible.builtin.stat:
-    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ convertx_identifier }}.service"
-  register: convertx_service_stat
+    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ rssbridge_identifier }}.service"
+  register: rssbridge_service_stat
 
-- name: Uninstall ConvertX systemd services and files
-  when: convertx_service_stat.stat.exists | bool
+- name: Uninstall RSS-Bridge systemd services and files
+  when: rssbridge_service_stat.stat.exists | bool
   block:
-    - name: Ensure ConvertX systemd service is stopped
+    - name: Ensure RSS-Bridge systemd service is stopped
       ansible.builtin.service:
-        name: "{{ convertx_identifier }}"
+        name: "{{ rssbridge_identifier }}"
         state: stopped
         enabled: false
         daemon_reload: true
 
-    - name: Ensure ConvertX systemd service does not exist
+    - name: Ensure RSS-Bridge systemd service does not exist
       ansible.builtin.file:
-        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ convertx_identifier }}.service"
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ rssbridge_identifier }}.service"
         state: absent
 
-    - name: Ensure ConvertX support files do not exist
+    - name: Ensure RSS-Bridge support files do not exist
       ansible.builtin.file:
-        path: "{{ convertx_base_path }}/{{ item }}"
+        path: "{{ rssbridge_base_path }}/{{ item }}"
         state: absent
       with_items:
         - env
         - labels
 
-    - name: Ensure ConvertX image source files path does not exist
+    - name: Ensure RSS-Bridge image source files path does not exist
       ansible.builtin.file:
-        path: "{{ convertx_container_image_self_build_src_files_path }}"
+        path: "{{ rssbridge_container_image_self_build_src_files_path }}"
         state: absent
 
-    - name: Ensure ConvertX local data path does not exist if empty
+    - name: Ensure RSS-Bridge local data path does not exist if empty
       ansible.builtin.command:
-        cmd: "rmdir {{ convertx_data_path }}"
-      register: convertx_data_path_deletion_result
-      changed_when: convertx_data_path_deletion_result.rc == 0
+        cmd: "rmdir {{ rssbridge_data_path }}"
+      register: rssbridge_data_path_deletion_result
+      changed_when: rssbridge_data_path_deletion_result.rc == 0
       failed_when: false
 
-    - name: Ensure ConvertX base path does not exist if empty
+    - name: Ensure RSS-Bridge base path does not exist if empty
       ansible.builtin.command:
-        cmd: "rmdir {{ convertx_base_path }}"
-      register: convertx_base_path_deletion_result
-      changed_when: convertx_base_path_deletion_result.rc == 0
+        cmd: "rmdir {{ rssbridge_base_path }}"
+      register: rssbridge_base_path_deletion_result
+      changed_when: rssbridge_base_path_deletion_result.rc == 0
       failed_when: false
 
-    - name: Ensure ConvertX container network does not exist via community.docker.docker_network
+    - name: Ensure RSS-Bridge container network does not exist via community.docker.docker_network
       when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
       community.docker.docker_network:
-        name: "{{ convertx_container_network }}"
+        name: "{{ rssbridge_container_network }}"
         state: absent
 
-    - name: Ensure ConvertX container network does not exist via ansible.builtin.command
+    - name: Ensure RSS-Bridge container network does not exist via ansible.builtin.command
       when: devture_systemd_docker_base_container_network_creation_method == 'command'
       ansible.builtin.command:
         cmd: >-
           {{ devture_systemd_docker_base_host_command_docker }} network rm
-          {{ convertx_container_network }}
+          {{ rssbridge_container_network }}
       register: network_deletion_result
-      changed_when: convertx_container_network in network_deletion_result.stdout
+      changed_when: rssbridge_container_network in network_deletion_result.stdout
 
-- name: Check existence of ConvertX local data path
+- name: Check existence of RSS-Bridge local data path
   ansible.builtin.stat:
-    path: "{{ convertx_data_path }}"
-  register: convertx_data_path_stat
+    path: "{{ rssbridge_data_path }}"
+  register: rssbridge_data_path_stat
 
 # We just want to notify the user. Deleting data is too destructive.
-- name: Notify if ConvertX local data remains
-  when: convertx_data_path_stat.stat.exists | bool
+- name: Notify if RSS-Bridge local data remains
+  when: rssbridge_data_path_stat.stat.exists | bool
   ansible.builtin.set_fact:
     devture_playbook_runtime_messages_list: |
       {{
         devture_playbook_runtime_messages_list | default([])
         +
         [
-          "Note: As the local ConvertX instance has been removed, some old data remains in `" + convertx_data_path + "`. Feel free to delete it."
+          "Note: As the local RSS-Bridge instance has been removed, some old data remains in `" + rssbridge_data_path + "`. Feel free to delete it."
         ]
       }}
