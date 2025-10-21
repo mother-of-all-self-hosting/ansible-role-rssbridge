@@ -176,5 +176,32 @@ rssbridge_systemd_wanted_services_list_default: []
 rssbridge_systemd_wanted_services_list_auto: []
 rssbridge_systemd_wanted_services_list_custom: []
 
-# Additional environment variables.
-rssbridge_environment_variables_additional_variables: ""
+# Control if maintenance mode is enabled
+rssbridge_config_system_enable_maintenance_mode: false
+
+# Specify the cache type
+# Valid values: file, sqlite, memcached, array, null
+rssbridge_config_cache_type: file
+
+# Control if donation information for bridges are displayed
+rssbridge_config_admin_donations: false
+
+# Specify the URL of the Webdriver or Selenium server
+# Example: http://localhost:4444
+rssbridge_config_webdriver_selenium_server_url: ""
+
+# Control if the browser runs in headless mode
+rssbridge_config_webdriver_headless: false
+
+# Control if HTTP Basic authentication is enabled
+rssbridge_config_authentication_enable: false
+
+# Specify username and password for HTTP Basic authentication
+rssbridge_config_authentication_username: ""
+rssbridge_config_authentication_password: ""
+
+# Specify token for authentication
+rssbridge_config_authentication_token: ""
+
+# Additional configurations
+rssbridge_config_additional_configurations: ""

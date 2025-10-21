@@ -56,13 +56,33 @@ rssbridge_hostname: "example.com"
 
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
+### Enabling authentication
+
+By default the service is public, and anyone can generate a feed to subscribe.
+
+You can enable HTTP Basic authentication or token authentication by adding the following configuration to your `vars.yml` file:
+
+```yaml
+# Enable HTTP Basic authentication
+rssbridge_config_authentication_enable: true
+rssbridge_config_authentication_username: YOUR_USERNAME_HERE
+rssbridge_config_authentication_password: YOUR_PASSWORD_HERE
+
+# Enable token authentication
+rssbridge_config_authentication_token: YOUR_TOKEN_HERE
+```
+
+Replace each placeholder with your own value, generated with `pwgen -s 64 1` or in another way.
+
 ### Extending the configuration
 
 There are some additional things you may wish to configure about the component.
 
 Take a look at:
 
-- [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `rssbridge_environment_variables_additional_variables` variable
+- [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `rssbridge_config_additional_configurations` variable
+
+See [`config.default.ini.php`](https://raw.githubusercontent.com/RSS-Bridge/rss-bridge/refs/heads/master/config.default.ini.php) for a complete list of FreshRSS's config options that you could put in `rssbridge_config_additional_configurations`.
 
 ## Installing
 

@@ -35,7 +35,7 @@ timezone = "UTC"
 ;message = "Hello world"
 
 ; Whether to enable maintenance mode. If enabled, feed requests receive 503 Service Unavailable
-enable_maintenance_mode = false
+enable_maintenance_mode = {{ rssbridge_config_system_enable_maintenance_mode | to_json }}
 
 ; Max file size for simple_html_dom in bytes (10000000 => 10 MB)
 max_file_size = 10000000
@@ -60,7 +60,7 @@ max_filesize = 20
 [cache]
 
 ; Cache type: file, sqlite, memcached, array, null
-type = "file"
+type = "{{ rssbridge_config_cache_type }}"
 
 ; Allow users to specify custom timeout for specific requests.
 ; true  = enabled
@@ -82,7 +82,7 @@ telegram = ""
 ; and a "Donate" button in the HTML view of the bridges feed.
 ; true  = enabled (default)
 ; false = disabled
-donations = true
+donations = {{ rssbridge_config_admin_donations | to_json }}
 
 [proxy]
 
@@ -103,22 +103,22 @@ by_bridge = false
 [webdriver]
 
 ; Sets the url of the webdriver or selenium server
-selenium_server_url = "http://localhost:4444"
+selenium_server_url = "{{ rssbridge_config_webdriver_selenium_server_url }}"
 
 ; Sets whether the browser should run in headless mode (no visible ui)
 ; true = enabled
 ; false = disabled (default)
-headless = false
+headless = {{ rssbridge_config_webdriver_headless | to_json }}
 
 [authentication]
 
 ; HTTP basic authentication
-enable = false
-username = "admin"
-password = ""
+enable = {{ rssbridge_config_authentication_enable | to_json }}
+username = "{{ rssbridge_config_authentication_username }}"
+password = "{{ rssbridge_config_authentication_password }}"
 
 ; Token authentication (URL)
-token = ""
+token = "{{ rssbridge_config_authentication_token }}"
 
 [error]
 
@@ -170,3 +170,5 @@ max_pages = 1
 ;
 ; "" = no token used (default)
 personal_access_token = ""
+
+{{ rssbridge_config_additional_configurations }}
