@@ -28,7 +28,6 @@ rssbridge_scheme: https
 rssbridge_hostname: ""
 
 # The path at which RSS-Bridge is exposed.
-# This value must be `/`, as the subpath can only be specified with "rssbridge_environment_variables_webroot".
 rssbridge_path_prefix: /
 
 rssbridge_container_image: "{{ rssbridge_container_image_registry_prefix }}rssbridge/rss-bridge:{{ rssbridge_container_image_tag }}"
