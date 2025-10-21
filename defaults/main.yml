@@ -18,8 +18,9 @@ rssbridge_config_path: "{{ rssbridge_base_path }}/config"
 # renovate: datasource=docker depName=rssbridge/rss-bridge
 rssbridge_version: latest
 
-rssbridge_uid: ""
-rssbridge_gid: ""
+# RSS-Brridge can only work with a root user
+rssbridge_uid: "0"
+rssbridge_gid: "33"
 
 rssbridge_scheme: https
 
