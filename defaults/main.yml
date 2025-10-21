@@ -13,7 +13,7 @@ rssbridge_enabled: true
 
 rssbridge_identifier: rssbridge
 rssbridge_base_path: "/{{ rssbridge_identifier }}"
-rssbridge_data_path: "{{ rssbridge_base_path }}/data"
+rssbridge_config_path: "{{ rssbridge_base_path }}/config"
 
 # renovate: datasource=docker depName=rssbridge/rss-bridge
 rssbridge_version: latest

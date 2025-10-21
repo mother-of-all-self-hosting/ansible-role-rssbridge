@@ -36,7 +36,7 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       {% endif %}
       --env-file={{ rssbridge_base_path }}/env \
       --label-file={{ rssbridge_base_path }}/labels \
-      --mount type=bind,src={{ rssbridge_data_path }},dst=/app/data \
+      --mount type=bind,src={{ rssbridge_config_path }},dst=/config \
       {% for volume in rssbridge_container_additional_volumes %}
       --mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options else '' }} \
       {% endfor %}
