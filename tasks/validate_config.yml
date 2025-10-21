@@ -24,7 +24,6 @@
     - rssbridge_hostname
     - rssbridge_path_prefix
     - rssbridge_container_network
-    - rssbridge_environment_variables_jwt_secret
 
 - name: Run if Traefik is enabled
   when: rssbridge_container_labels_traefik_enabled | bool

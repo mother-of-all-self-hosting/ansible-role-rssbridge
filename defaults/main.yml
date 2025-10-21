@@ -176,33 +176,5 @@ rssbridge_systemd_wanted_services_list_default: []
 rssbridge_systemd_wanted_services_list_auto: []
 rssbridge_systemd_wanted_services_list_custom: []
 
-# Specify a long and secret string used to sign the JSON Web Token
-rssbridge_environment_variables_jwt_secret: ""
-
-# Control whether account registration is enabled
-rssbridge_environment_variables_account_registration: false
-
-# Control whether HTTP connections is allowed
-# Only set this to true locally
-rssbridge_environment_variables_http_allowed: false
-
-# Control whether unauthenticated users is allowed to use the service
-# Only set this to true locally
-rssbridge_environment_variables_allow_unauthenticated: false
-
-# Specify how many hours to keep files before deleting them
-# Set to 0 to disable it
-rssbridge_environment_variables_auto_delete_every_n_hours: 24
-
-# Specify the address to the root path
-# Setting this to "/convert" will serve the website on "{{ rssbridge_hostname }}/convert/"
-rssbridge_environment_variables_webroot: ''
-
-# Specify arguments to pass to ffmpeg, e.g. -preset veryfast
-rssbridge_environment_variables_ffmpeg_args: ""
-
-# Control whether the history page is hidden
-rssbridge_environment_variables_hide_history: false
-
 # Additional environment variables.
 rssbridge_environment_variables_additional_variables: ''

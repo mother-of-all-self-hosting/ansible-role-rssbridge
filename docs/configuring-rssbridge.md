@@ -56,37 +56,6 @@ rssbridge_hostname: "example.com"
 
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
-### Enable account registration (optional)
-
-To use RSS-Bridge you need to create an account and log in to it on the browser.
-
-In order to prevent abuse, account registration will be disabled after the first user is created. You can enable it by adding the following configuration to your `vars.yml` file:
-
-```yaml
-rssbridge_environment_variables_account_registration: true
-```
-
-### Set a subpath (optional)
-
-It is possible to serve the instance under a subpath by adding the following configuration to your `vars.yml` file.
-
-```yaml
-rssbridge_environment_variables_webroot: YOUR_SUBPATH_HERE
-```
-
-For example, setting this to `/convert` will have the website served on `https://example.com/convert/`.
-
->[!NOTE]
-> The subpath cannot be specified with the `rssbridge_path_prefix` variable.
-
-### Disabling authentication function
-
-If the service is hosted locally or with an authentication service like [Tinyauth](https://tinyauth.app/), you can disable the authentication function of RSS-Bridge in favor of it by adding the following configuration to your `vars.yml` file.
-
-```yaml
-rssbridge_environment_variables_allow_unauthenticated: true
-```
-
 ### Extending the configuration
 
 There are some additional things you may wish to configure about the component.
@@ -94,8 +63,6 @@ There are some additional things you may wish to configure about the component.
 Take a look at:
 
 - [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `rssbridge_environment_variables_additional_variables` variable
-
-See [this section on the official documentation](https://github.com/C4illin/RSS-Bridge/blob/main/README.md#environment-variables) for a complete list of RSS-Bridge's config options that you could put in `rssbridge_environment_variables_additional_variables`.
 
 ## Installing
 

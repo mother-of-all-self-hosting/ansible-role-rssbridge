@@ -15,7 +15,7 @@
     - "{{ rssbridge_base_path }}"
     - "{{ rssbridge_data_path }}"
 
-- name: Ensure RSS-Bridge support files installed
+- name: Ensure RSS-Bridge support file installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ rssbridge_base_path }}/{{ item }}"
@@ -23,7 +23,6 @@
     owner: "{{ rssbridge_uid }}"
     group: "{{ rssbridge_gid }}"
   with_items:
-    - env
     - labels
 
 - name: Run if self-building of RSS-Bridge container image is not enabled

@@ -24,12 +24,11 @@
         path: "{{ devture_systemd_docker_base_systemd_path }}/{{ rssbridge_identifier }}.service"
         state: absent
 
-    - name: Ensure RSS-Bridge support files do not exist
+    - name: Ensure RSS-Bridge support file does not exist
       ansible.builtin.file:
         path: "{{ rssbridge_base_path }}/{{ item }}"
         state: absent
       with_items:
-        - env
         - labels
 
     - name: Ensure RSS-Bridge image source files path does not exist
