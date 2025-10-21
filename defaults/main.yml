@@ -15,8 +15,8 @@ rssbridge_identifier: rssbridge
 rssbridge_base_path: "/{{ rssbridge_identifier }}"
 rssbridge_data_path: "{{ rssbridge_base_path }}/data"
 
-# renovate: datasource=docker depName=c4illin/rssbridge versioning=semver
-rssbridge_version: v0.15.1
+# renovate: datasource=docker depName=rssbridge/rss-bridge
+rssbridge_version: latest
 
 rssbridge_uid: ""
 rssbridge_gid: ""
@@ -30,7 +30,7 @@ rssbridge_hostname: ""
 # This value must be `/`, as the subpath can only be specified with "rssbridge_environment_variables_webroot".
 rssbridge_path_prefix: /
 
-rssbridge_container_image: "{{ rssbridge_container_image_registry_prefix }}c4illin/rssbridge:{{ rssbridge_container_image_tag }}"
+rssbridge_container_image: "{{ rssbridge_container_image_registry_prefix }}rssbridge/rss-bridge:{{ rssbridge_container_image_tag }}"
 rssbridge_container_image_tag: "{{ rssbridge_version }}"
 rssbridge_container_image_registry_prefix: "{{ rssbridge_container_image_registry_prefix_upstream }}"
 rssbridge_container_image_registry_prefix_upstream: "{{ rssbridge_container_image_registry_prefix_upstream_default }}"
@@ -38,8 +38,8 @@ rssbridge_container_image_registry_prefix_upstream_default: docker.io/
 rssbridge_container_image_force_pull: "{{ rssbridge_container_image.endswith(':latest') }}"
 
 rssbridge_container_image_self_build: false
-rssbridge_container_image_self_build_name: "c4illin/rssbridge:{{ rssbridge_container_image_self_build_repo_version }}" # the image name must be lowercase
-rssbridge_container_image_self_build_repo: "https://github.com/C4illin/RSS-Bridge.git"
+rssbridge_container_image_self_build_name: "rssbridge/rss-bridge:{{ rssbridge_container_image_self_build_repo_version }}" # the image name must be lowercase
+rssbridge_container_image_self_build_repo: "https://github.com/RSS-Bridge/rss-bridge.git"
 rssbridge_container_image_self_build_repo_version: "{{ rssbridge_version if rssbridge_version != 'latest' else 'main' }}"
 rssbridge_container_image_self_build_src_files_path: "{{ rssbridge_base_path }}/docker-src"
 
