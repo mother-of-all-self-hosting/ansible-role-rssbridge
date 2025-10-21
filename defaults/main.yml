@@ -52,7 +52,7 @@ rssbridge_container_http_host_bind_port: ""
 rssbridge_container_network: "{{ rssbridge_identifier }}"
 
 # The port number in the container
-rssbridge_container_http_port: 3000
+rssbridge_container_http_port: 80
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
