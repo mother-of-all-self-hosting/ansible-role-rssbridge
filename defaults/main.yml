@@ -117,7 +117,7 @@ rssbridge_container_labels_additional_labels: "{{ rssbridge_container_labels_add
 rssbridge_container_labels_additional_labels_auto: {}
 rssbridge_container_labels_additional_labels_custom: {}
 
-# A list of extra arguments to pass to the container (`docker run` command)
+# A list of extra arguments to pass to the container (`docker create` command)
 rssbridge_container_extra_arguments: "{{ rssbridge_container_extra_arguments_auto + rssbridge_container_extra_arguments_custom }}"
 rssbridge_container_extra_arguments_auto: []
 rssbridge_container_extra_arguments_custom: []
