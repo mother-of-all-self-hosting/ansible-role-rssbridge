@@ -1,8 +1,8 @@
-# SPDX-FileCopyrightText: 2023 - 2024 Nikita Chernyi
-# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023, 2024 Nikita Chernyi
+# SPDX-FileCopyrightText: 2023-2025 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
 # SPDX-FileCopyrightText: 2025 MASH project contributors
-# SPDX-FileCopyrightText: 2025 Suguru Hirahara
+# SPDX-FileCopyrightText: 2025, 2026 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -210,3 +210,9 @@ rssbridge_config_authentication_token: ""
 
 # Additional configurations
 rssbridge_config_additional_configurations: ""
+
+# Specify the timezone
+rssbridge_environment_variables_tz: UTC
+
+# Additional environment variables.
+rssbridge_environment_variables_additional_variables: ""

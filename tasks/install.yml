@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
-# SPDX-FileCopyrightText: 2025 Suguru Hirahara
+# SPDX-FileCopyrightText: 2023-2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2025, 2026 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -15,7 +15,7 @@
     - "{{ rssbridge_base_path }}"
     - "{{ rssbridge_config_path }}"
 
-- name: Ensure RSS-Bridge support file installed
+- name: Ensure RSS-Bridge support files installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ rssbridge_base_path }}/{{ item }}"
@@ -23,6 +23,7 @@
     owner: "{{ rssbridge_uid }}"
     group: "{{ rssbridge_gid }}"
   with_items:
+    - env
     - labels
 
 - name: Ensure RSS-Bridge config file installed
