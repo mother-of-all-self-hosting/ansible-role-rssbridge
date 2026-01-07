@@ -59,4 +59,6 @@ traefik.http.routers.{{ rssbridge_identifier }}.tls.certResolver={{ rssbridge_co
 traefik.http.services.{{ rssbridge_identifier }}.loadbalancer.server.port={{ rssbridge_container_http_port }}
 {% endif %}
 
-{{ rssbridge_container_labels_additional_labels }}
+{% for arg in rssbridge_container_labels_additional_labels %}
+{{ arg }}
+{% endfor %}
