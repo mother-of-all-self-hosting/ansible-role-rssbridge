@@ -110,7 +110,7 @@ rssbridge_container_labels_traefik_additional_response_headers_custom: {}
 # To add your own custom labels, use `rssbridge_container_labels_additional_labels_custom`
 #
 # Example:
-# rssbridge_container_labels_additional_labels_custom: |
+# rssbridge_container_labels_additional_labels_custom:
 #   - my.label=1
 #   - another.label="here"
 rssbridge_container_labels_additional_labels: "{{ rssbridge_container_labels_additional_labels_auto + rssbridge_container_labels_additional_labels_custom }}"
