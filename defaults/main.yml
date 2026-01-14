@@ -22,6 +22,7 @@ rssbridge_version: latest
 rssbridge_uid: "0"
 rssbridge_gid: "33"
 
+# The scheme used for serving RSS-Bridge.
 rssbridge_scheme: https
 
 # The hostname at which RSS-Bridge is served.
