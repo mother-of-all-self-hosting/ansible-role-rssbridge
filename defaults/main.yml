@@ -44,13 +44,13 @@ rssbridge_container_image_self_build_repo: "https://github.com/RSS-Bridge/rss-br
 rssbridge_container_image_self_build_repo_version: "{{ rssbridge_version if rssbridge_version != 'latest' else 'main' }}"
 rssbridge_container_image_self_build_src_files_path: "{{ rssbridge_base_path }}/docker-src"
 
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+rssbridge_container_network: "{{ rssbridge_identifier }}"
+
 # Controls whether the container exposes its HTTP port (tcp/80 in the container).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
 rssbridge_container_http_host_bind_port: ""
-
-# The base container network. It will be auto-created by this role if it doesn't exist already.
-rssbridge_container_network: "{{ rssbridge_identifier }}"
 
 # The port number in the container
 rssbridge_container_http_port: 80
