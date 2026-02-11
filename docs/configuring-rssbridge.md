@@ -76,7 +76,7 @@ Replace each placeholder with your own value, generated with `pwgen -s 64 1` or 
 
 ### Extending the configuration
 
-There are some additional things you may wish to configure about the component.
+There are some additional things you may wish to configure about the service.
 
 Take a look at:
 
