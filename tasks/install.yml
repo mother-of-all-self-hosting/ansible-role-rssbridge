@@ -25,6 +25,7 @@
   with_items:
     - env
     - labels
+  register: rssbridge_support_files_result
 
 - name: Ensure RSS-Bridge config file installed
   ansible.builtin.template:
@@ -35,6 +36,7 @@
     group: "{{ rssbridge_gid }}"
   with_items:
     - config.ini.php
+  register: rssbridge_config_result
 
 - name: Run if self-building of RSS-Bridge container image is not enabled
   when: "not rssbridge_container_image_self_build | bool"
@@ -46,20 +48,20 @@
         source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
         force_source: "{{ rssbridge_container_image_force_pull if ansible_version.major > 2 or ansible_version.minor >= 8 else omit }}"
         force: "{{ omit if ansible_version.major > 2 or ansible_version.minor >= 8 else rssbridge_container_image_force_pull }}"
-      register: result
+      register: rssbridge_container_image_pull_result
       retries: "{{ devture_playbook_help_container_retries_count }}"
       delay: "{{ devture_playbook_help_container_retries_delay }}"
-      until: result is not failed
+      until: rssbridge_container_image_pull_result is not failed
 
     - name: Ensure RSS-Bridge container image is pulled via ansible.builtin.command
       when: devture_systemd_docker_base_container_image_pull_method == 'command'
       ansible.builtin.command:
         cmd: "{{ devture_systemd_docker_base_host_command_docker }} pull {{ rssbridge_container_image }}"
-      register: result
+      register: rssbridge_container_image_pull_result
       retries: "{{ devture_playbook_help_container_retries_count }}"
       delay: "{{ devture_playbook_help_container_retries_delay }}"
-      until: result is not failed
-      changed_when: "'Downloaded newer image' in result.stdout"
+      until: rssbridge_container_image_pull_result is not failed
+      changed_when: "'Downloaded newer image' in rssbridge_container_image_pull_result.stdout"
 
 - name: Run if self-building of RSS-Bridge container image is enabled
   when: "rssbridge_container_image_self_build | bool"
@@ -111,3 +113,15 @@
     src: "{{ role_path }}/templates/systemd/rssbridge.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ rssbridge_identifier }}.service"
     mode: "0644"
+  register: rssbridge_systemd_service_result
+
+- name: Determine whether RSS-Bridge needs a restart
+  ansible.builtin.set_fact:
+    rssbridge_restart_necessary: >-
+      {{
+        rssbridge_support_files_result.changed | default(false)
+        or rssbridge_systemd_service_result.changed | default(false)
+        or rssbridge_config_result.changed | default(false)
+        or rssbridge_container_image_pull_result.changed | default(false)
+        or rssbridge_container_image_build_result.changed | default(false)
+      }}
