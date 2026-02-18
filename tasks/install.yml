@@ -27,7 +27,7 @@
     - labels
   register: rssbridge_support_files_result
 
-- name: Ensure RSS-Bridge config file installed
+- name: Ensure RSS-Bridge configuration file installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ rssbridge_config_path }}/{{ item }}"
@@ -36,7 +36,7 @@
     group: "{{ rssbridge_gid }}"
   with_items:
     - config.ini.php
-  register: rssbridge_config_result
+  register: rssbridge_config_file_result
 
 - name: Run if self-building of RSS-Bridge container image is not enabled
   when: "not rssbridge_container_image_self_build | bool"
@@ -120,8 +120,8 @@
     rssbridge_restart_necessary: >-
       {{
         rssbridge_support_files_result.changed | default(false)
+        or rssbridge_config_file_result.changed | default(false)
         or rssbridge_systemd_service_result.changed | default(false)
-        or rssbridge_config_result.changed | default(false)
         or rssbridge_container_image_pull_result.changed | default(false)
         or rssbridge_container_image_build_result.changed | default(false)
       }}
