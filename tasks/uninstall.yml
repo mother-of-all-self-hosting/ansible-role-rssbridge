@@ -75,7 +75,7 @@
   register: rssbridge_config_path_stat
 
 # We just want to notify the user. Deleting data is too destructive.
-- name: Notify if RSS-Bridge local data remains
+- name: Inject the message about the remaining RSS-Bridge local data path
   when: rssbridge_config_path_stat.stat.exists | bool
   ansible.builtin.set_fact:
     devture_playbook_runtime_messages_list: |
