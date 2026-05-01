@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Slavi Pantaleev
-# SPDX-FileCopyrightText: 2025 Suguru Hirahara
+# SPDX-FileCopyrightText: 2025, 2026 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -7,14 +7,15 @@
 - name: Fail if required RSS-Bridge settings not defined
   ansible.builtin.fail:
     msg: >-
-      You need to define a required configuration setting (`{{ item }}`).
-  when: "lookup('vars', item, default='') | string | length == 0"
+      You need to define a required configuration setting (`{{ item.name }}`).
+  when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
   with_items:
-    - rssbridge_uid
-    - rssbridge_gid
-    - rssbridge_hostname
-    - rssbridge_path_prefix
-    - rssbridge_container_network
+    - { "name": "rssbridge_uid", when: true }
+    - { "name": "rssbridge_gid", when: true }
+    - { "name": "rssbridge_hostname", when: true }
+    - { "name": "rssbridge_path_prefix", when: true }
+    - { "name": "rssbridge_container_network", when: true }
+    - { "name": "rssbridge_container_labels_traefik_middleware_basic_auth_users", when: "{{ rssbridge_container_labels_traefik_middleware_basic_auth_enabled }}" }
 
 - name: Run if Traefik is enabled
   when: rssbridge_container_labels_traefik_enabled | bool
