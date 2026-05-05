@@ -36,7 +36,6 @@ rssbridge_container_image_tag: "{{ rssbridge_version }}"
 rssbridge_container_image_registry_prefix: "{{ rssbridge_container_image_registry_prefix_upstream }}"
 rssbridge_container_image_registry_prefix_upstream: "{{ rssbridge_container_image_registry_prefix_upstream_default }}"
 rssbridge_container_image_registry_prefix_upstream_default: docker.io/
-rssbridge_container_image_force_pull: "{{ rssbridge_container_image.endswith(':latest') }}"
 
 rssbridge_container_image_self_build: false
 rssbridge_container_image_self_build_name: "rssbridge/rss-bridge:{{ rssbridge_container_image_self_build_repo_version }}" # the image name must be lowercase
