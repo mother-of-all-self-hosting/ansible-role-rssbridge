@@ -33,7 +33,8 @@ provisioner:
         # Variables for RSS-Bridge
         rssbridge_uid: "0"
         rssbridge_gid: 33
-        rssbridge_hostname: rssbridge
+        rssbridge_scheme: http
+        rssbridge_hostname: localhost
         rssbridge_container_labels_traefik_enabled: false
         rssbridge_container_http_host_bind_port: 80
   env:
