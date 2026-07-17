@@ -23,6 +23,12 @@
         fail_msg: "rssbridge.service not active ({{ rssbridge_service.status.ActiveState }})"
         success_msg: "rssbridge.service is active"
 
+    - name: Retrieve RSS-Bridge service log for debugging
+      when: rssbridge_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu rssbridge.service
+      changed_when: false
+
     - name: Wait for RSS-Bridge HTTP endpoint to respond (up to 10m)
       ansible.builtin.uri:
         url: "http://localhost:80/"

@@ -27,6 +27,10 @@ provisioner:
   inventory:
     group_vars:
       all:
+        # Helper variables
+        rssbridge_debug_service_enabled: false
+
+        # Variables for RSS-Bridge
         rssbridge_uid: "0"
         rssbridge_gid: 33
         rssbridge_hostname: rssbridge
