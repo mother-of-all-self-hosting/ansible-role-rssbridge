@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Verify RSS-Bridge systemd service
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Wait for RSS-Bridge service to become active (up to 180s)
+      ansible.builtin.systemd:
+        name: rssbridge.service
+      register: rssbridge_service
+      until: rssbridge_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+
+    - name: Assert RSS-Bridge service is active
+      ansible.builtin.assert:
+        that: rssbridge_service.status.ActiveState == 'active'
+        fail_msg: "rssbridge.service not active ({{ rssbridge_service.status.ActiveState }})"
+        success_msg: "rssbridge.service is active"
+
+    - name: Retrieve RSS-Bridge service log for debugging
+      when: rssbridge_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu rssbridge.service
+      changed_when: false
+
+    - name: Wait for RSS-Bridge HTTP endpoint to respond (up to 10m)
+      ansible.builtin.uri:
+        url: "http://localhost:80/"
+        method: GET
+        status_code: [200, 302]
+        follow_redirects: none
+      register: rssbridge_endpoint
+      until: rssbridge_endpoint.status in [200, 302]
+      retries: 120
+      delay: 5
+
+    - name: Assert RSS-Bridge HTTP endpoint responds
+      ansible.builtin.assert:
+        that: rssbridge_endpoint.status in [200, 302]
+        fail_msg: "RSS-Bridge did not respond as expected ({{ rssbridge_endpoint.status | default('no response') }})"
+        success_msg: "RSS-Bridge responded with {{ rssbridge_endpoint.status }}"
+
+    - name: Show RSS-Bridge systemd service status summary
+      ansible.builtin.debug:
+        msg:
+          - "RSS-Bridge systemd: {{ rssbridge_service.status.ActiveState }}"
+          - "RSS-Bridge HTTP: {{ rssbridge_endpoint.status }}"
