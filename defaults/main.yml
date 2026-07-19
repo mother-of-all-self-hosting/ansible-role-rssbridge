@@ -40,7 +40,7 @@ rssbridge_container_image_registry_prefix_upstream_default: docker.io/
 rssbridge_container_image_self_build: false
 rssbridge_container_image_self_build_name: "rssbridge/rss-bridge:{{ rssbridge_container_image_self_build_repo_version }}" # the image name must be lowercase
 rssbridge_container_image_self_build_repo: "https://github.com/RSS-Bridge/rss-bridge.git"
-rssbridge_container_image_self_build_repo_version: "{{ rssbridge_version if rssbridge_version != 'latest' else 'main' }}"
+rssbridge_container_image_self_build_repo_version: "{{ rssbridge_version if rssbridge_version != 'latest' else 'master' }}"
 rssbridge_container_image_self_build_src_files_path: "{{ rssbridge_base_path }}/docker-src"
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
