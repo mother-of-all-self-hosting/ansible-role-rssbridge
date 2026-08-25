@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 spatterlight
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 #
@@ -29,7 +30,14 @@
       ansible.builtin.systemd_service:
         daemon_reload: true
 
+    # A playbook consuming this role leaves the restarting to the systemd
+    # service manager role, which acts on `rssbridge_restart_necessary`. There
+    # is no such role here, so the same decision is made inline - otherwise a
+    # second converge against changed configuration would leave the container
+    # running the configuration it started with, and the verification would be
+    # inspecting a stale process. RSS-Bridge boots in a second and runs no
+    # migrations, so restarting it costs nothing.
     - name: Ensure RSS-Bridge systemd service is started
       ansible.builtin.systemd_service:
         name: rssbridge.service
-        state: started
+        state: "{{ 'restarted' if rssbridge_restart_necessary | bool else 'started' }}"
