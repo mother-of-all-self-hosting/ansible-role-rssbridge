@@ -82,7 +82,15 @@ Take a look at:
 
 - [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `rssbridge_config_additional_configurations` variable
 
-See [`config.default.ini.php`](https://raw.githubusercontent.com/RSS-Bridge/rss-bridge/refs/heads/master/config.default.ini.php) for a complete list of FreshRSS's config options that you could put in `rssbridge_config_additional_configurations`.
+See [`config.default.ini.php`](https://raw.githubusercontent.com/RSS-Bridge/rss-bridge/refs/heads/master/config.default.ini.php) for a complete list of RSS-Bridge's config options that you could put in `rssbridge_config_additional_configurations`.
+
+The value is appended verbatim to the end of the generated `config.ini.php`, which is past the last section header the role writes. Settings put there therefore need to name their own section, or they will silently land in whichever section happens to come last:
+
+```yaml
+rssbridge_config_additional_configurations: |
+  [system]
+  message = "This instance is for personal use"
+```
 
 ## Installing
 
