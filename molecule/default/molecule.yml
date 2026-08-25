@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 spatterlight
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 #
@@ -31,13 +32,64 @@ provisioner:
         # Helper variables
         rssbridge_debug_service_enabled: false
 
+        # The container name the role derives from its identifier.
+        # Role defaults are not in scope in a verify play, so it is spelled out.
+        rssbridge_molecule_container: rssbridge
+
+        # A static feed, written by prepare.yml and mounted into the container
+        # below, which the RSS-Bridge instance is asked to turn into a feed of
+        # its own. Nothing here reaches the public internet: almost every
+        # bridge RSS-Bridge ships scrapes a third-party website, which is
+        # exactly the kind of flakiness an automerge gate must not depend on.
+        rssbridge_molecule_feed_fixture_host_path: /var/lib/mash-molecule-rssbridge/molecule-feed.xml
+        rssbridge_molecule_feed_fixture_container_path: /app/static/molecule-feed.xml
+        rssbridge_molecule_feed_fixture_channel_title: MASH Molecule Fixture Feed
+        rssbridge_molecule_feed_fixture_item_title: MASH Molecule fixture item
+
         # Variables for RSS-Bridge
         rssbridge_uid: "0"
         rssbridge_gid: 33
         rssbridge_scheme: http
         rssbridge_hostname: localhost
         rssbridge_container_labels_traefik_enabled: false
-        rssbridge_container_http_host_bind_port: 80
+        rssbridge_container_http_host_bind_port: 127.0.0.1:8080
+
+        # RSS-Bridge's entrypoint rewrites the port nginx listens on to
+        # whatever HTTP_PORT says, so this pair is only consistent if the env
+        # file the role renders actually reached the container. Left to itself
+        # the image listens on 80, and every probe below would be refused.
+        rssbridge_container_http_port: 8081
+        rssbridge_environment_variables_additional_variables: |
+          HTTP_PORT=8081
+
+        # Deliberately not the stock UTC, so that reading it back out of the
+        # running container says something about the role's env file rather
+        # than about the image.
+        rssbridge_environment_variables_tz: Europe/Sofia
+
+        # HTTP Basic authentication is off in the image's own
+        # config.default.ini.php, and this role's config.ini.php template is
+        # otherwise close to a copy of it - so this is the setting that tells a
+        # role-rendered configuration apart from the image's own fallback.
+        rssbridge_config_authentication_enable: true
+        rssbridge_config_authentication_username: mash-molecule
+        rssbridge_config_authentication_password: mash-molecule-secret
+
+        # The role's free-form configuration escape hatch, appended verbatim to
+        # config.ini.php. A repeated section header is how it reaches a setting
+        # the template does not template; `message` is rendered into every
+        # page, which makes it visible from the outside.
+        rssbridge_config_additional_configurations: |
+          [system]
+          message = "MASH Molecule RSS-Bridge"
+
+        # Exercises the additional-volumes list while putting the feed fixture
+        # somewhere nginx serves it, so RSS-Bridge can fetch it over loopback.
+        rssbridge_container_additional_volumes_custom:
+          - type: bind
+            src: /var/lib/mash-molecule-rssbridge/molecule-feed.xml
+            dst: /app/static/molecule-feed.xml
+            options: readonly
   env:
     # Workaround for https://github.com/ansible/molecule/issues/4391
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles

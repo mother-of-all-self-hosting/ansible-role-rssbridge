@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 spatterlight
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 #
@@ -27,3 +28,39 @@
       vars:
         docker_daemon_options:
           storage-driver: vfs
+
+    - name: Ensure the RSS-Bridge feed fixture directory exists
+      ansible.builtin.file:
+        path: "{{ rssbridge_molecule_feed_fixture_host_path | dirname }}"
+        state: directory
+        mode: "0755"
+
+    # RSS-Bridge is a feed generator, and the only way to find out whether it
+    # generates feeds is to have it generate one. Its bridges almost all scrape
+    # a third-party website, though, which no automerge gate should depend on -
+    # so the instance is handed a feed of our own instead, mounted into the
+    # container where its own nginx serves it, and asked to run it through
+    # FeedMergeBridge. Everything then stays on loopback inside the container.
+    #
+    # World-readable, because nginx serves it as www-data while the container
+    # itself runs as the role's uid.
+    - name: Ensure the RSS-Bridge feed fixture exists
+      ansible.builtin.copy:
+        dest: "{{ rssbridge_molecule_feed_fixture_host_path }}"
+        mode: "0644"
+        content: |
+          <?xml version="1.0" encoding="UTF-8"?>
+          <rss version="2.0">
+            <channel>
+              <title>{{ rssbridge_molecule_feed_fixture_channel_title }}</title>
+              <link>http://127.0.0.1{{ rssbridge_molecule_feed_fixture_container_path | regex_replace('^/app', '') }}</link>
+              <description>A static feed served by the RSS-Bridge container itself</description>
+              <item>
+                <title>{{ rssbridge_molecule_feed_fixture_item_title }}</title>
+                <link>http://127.0.0.1{{ rssbridge_molecule_feed_fixture_container_path | regex_replace('^/app', '') }}#1</link>
+                <guid isPermaLink="false">mash-molecule-fixture-1</guid>
+                <pubDate>Mon, 24 Aug 2026 12:00:00 +0000</pubDate>
+                <description>Proof that the RSS-Bridge feed engine ran</description>
+              </item>
+            </channel>
+          </rss>

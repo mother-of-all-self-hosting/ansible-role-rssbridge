@@ -1,53 +1,425 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 spatterlight
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Verify RSS-Bridge systemd service
+- name: Verify RSS-Bridge
   hosts: all
   become: true
   gather_facts: false
+
+  vars:
+    rssbridge_verify_url: "http://{{ rssbridge_container_http_host_bind_port }}"
+
+    # The path nginx serves the mounted fixture from, and the URL RSS-Bridge
+    # itself uses to fetch it. That one is on the container's own loopback, on
+    # the port HTTP_PORT moved nginx to - not on the host's published port.
+    rssbridge_verify_fixture_path: "{{ rssbridge_molecule_feed_fixture_container_path | regex_replace('^/app', '') }}"
+    rssbridge_verify_internal_fixture_url: "http://127.0.0.1:{{ rssbridge_container_http_port }}{{ rssbridge_verify_fixture_path }}"
+
+    # No spaces or reserved characters anywhere in here, so the query string
+    # needs no escaping and stays readable in a failure message.
+    rssbridge_verify_feed_name: MASH-Molecule-Merge
+    rssbridge_verify_feed_url: >-
+      {{ rssbridge_verify_url }}/?action=display&bridge=FeedMergeBridge&format=Atom&feed_name={{ rssbridge_verify_feed_name }}&feed_1={{ rssbridge_verify_internal_fixture_url }}
+
+    # The name carries both the role and the scenario, like the platform does,
+    # so a leftover container can never be mistaken for another scenario's.
+    rssbridge_verify_control_container: "{{ inventory_hostname }}-negative-control"
+    rssbridge_verify_control_port: 8099
+    rssbridge_verify_control_url: "http://127.0.0.1:{{ rssbridge_verify_control_port }}"
+
+    rssbridge_verify_message: MASH Molecule RSS-Bridge
+    rssbridge_verify_auth_challenge: Please authenticate in order to access this instance!
+
   tasks:
-    - name: Wait for RSS-Bridge service to become active (up to 180s)
-      ansible.builtin.systemd:
+    # Role defaults are not in scope in a verify play, but the version the role
+    # installs lives in them and is what the running container is checked
+    # against below. Only leaf literals may be read out of this - anything
+    # Jinja-derived would be resolved against an empty namespace.
+    - name: Load the RSS-Bridge role defaults
+      ansible.builtin.include_vars:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+        name: rssbridge_defaults
+
+    # ------------------------------------------------------------------
+    # The unit is up
+    # ------------------------------------------------------------------
+
+    # Worth little on its own: the unit is `Restart=always`, so it reads
+    # `active` for a container that is crash-looping. It is only the starting
+    # gun for everything below, and the crash loop is ruled out at the end.
+    - name: Wait for the RSS-Bridge systemd service to become active (up to 180s)
+      ansible.builtin.systemd_service:
         name: rssbridge.service
       register: rssbridge_service
       until: rssbridge_service.status.ActiveState == 'active'
       retries: 36
       delay: 5
 
-    - name: Assert RSS-Bridge service is active
+    - name: Assert the RSS-Bridge systemd service is active
       ansible.builtin.assert:
         that: rssbridge_service.status.ActiveState == 'active'
         fail_msg: "rssbridge.service not active ({{ rssbridge_service.status.ActiveState }})"
         success_msg: "rssbridge.service is active"
 
-    - name: Retrieve RSS-Bridge service log for debugging
+    - name: Retrieve the RSS-Bridge service log for debugging
       when: rssbridge_debug_service_enabled | bool
       ansible.builtin.command:
         cmd: journalctl -xeu rssbridge.service
       changed_when: false
 
-    - name: Wait for RSS-Bridge HTTP endpoint to respond (up to 10m)
+    - name: Read the RSS-Bridge container the role created
+      ansible.builtin.command:
+        cmd: "docker inspect {{ rssbridge_molecule_container }}"
+      register: rssbridge_container_raw
+      changed_when: false
+
+    - name: Make sense of the RSS-Bridge container
+      ansible.builtin.set_fact:
+        rssbridge_container: "{{ (rssbridge_container_raw.stdout | from_json)[0] }}"
+
+    # ------------------------------------------------------------------
+    # The negative control: the same image, without the role's doing
+    # ------------------------------------------------------------------
+
+    # This image needs no configuration at all. Given none it serves a complete
+    # RSS-Bridge on `/`, with every bridge it ships enabled, answering 200 to
+    # anyone. So "it answered 200" is worth nothing here, and neither is "it
+    # produced a feed" - the stock image does both. Every assertion further
+    # down is on something this control answers differently.
+    - name: Probe an RSS-Bridge that the role has not configured
+      block:
+        - name: Start an RSS-Bridge with none of the role's configuration
+          ansible.builtin.command:
+            argv:
+              - docker
+              - run
+              - --detach
+              - --rm
+              - --name
+              - "{{ rssbridge_verify_control_container }}"
+              - --publish
+              - "127.0.0.1:{{ rssbridge_verify_control_port }}:80"
+              - "{{ rssbridge_container.Config.Image }}"
+          changed_when: true
+
+        - name: Wait for the unconfigured RSS-Bridge to come up (up to 5m)
+          ansible.builtin.uri:
+            url: "{{ rssbridge_verify_control_url }}/"
+            follow_redirects: none
+            return_content: true
+            status_code: [200, -1]
+          register: rssbridge_control_home
+          until: rssbridge_control_home.status == 200
+          retries: 60
+          delay: 5
+
+        - name: Ask the unconfigured RSS-Bridge for the feed fixture
+          ansible.builtin.uri:
+            url: "{{ rssbridge_verify_control_url }}{{ rssbridge_verify_fixture_path }}"
+            follow_redirects: none
+            status_code: [200, 404]
+          register: rssbridge_control_fixture
+
+        - name: Ask the unconfigured RSS-Bridge container for its timezone
+          ansible.builtin.command:
+            argv:
+              - docker
+              - exec
+              - "{{ rssbridge_verify_control_container }}"
+              - printenv
+              - TZ
+          register: rssbridge_control_tz
+          changed_when: false
+          failed_when: false
+      always:
+        - name: Stop the unconfigured RSS-Bridge
+          ansible.builtin.command:
+            argv:
+              - docker
+              - rm
+              - --force
+              - "{{ rssbridge_verify_control_container }}"
+          changed_when: true
+
+    - name: Assert the unconfigured RSS-Bridge shows none of what the role configures
+      ansible.builtin.assert:
+        that:
+          # No credentials were offered and it answered anyway, so the 401 the
+          # role's instance returns below is the role's configuration talking.
+          - rssbridge_control_home.status == 200
+          - rssbridge_verify_auth_challenge not in rssbridge_control_home.content
+          # Its own config.default.ini.php sets no `message`.
+          - rssbridge_verify_message not in rssbridge_control_home.content
+          # Nothing mounted the feed fixture into it.
+          - rssbridge_control_fixture.status == 404
+          # No env file, so no TZ at all.
+          - rssbridge_control_tz.rc != 0 or rssbridge_control_tz.stdout | trim == ''
+        fail_msg: >-
+          The unconfigured RSS-Bridge already shows what this role is supposed
+          to configure, so nothing below can be credited to the role:
+          home={{ rssbridge_control_home.status }},
+          fixture={{ rssbridge_control_fixture.status }},
+          TZ={{ rssbridge_control_tz.stdout | default('') | trim }}
+        success_msg: >-
+          The unconfigured RSS-Bridge serves its home page to anyone without
+          credentials, carries no system message, has no feed fixture and no
+          timezone - so everything below is the role's doing
+
+    # ------------------------------------------------------------------
+    # Configuration reaches the process, not just the files on disk
+    # ------------------------------------------------------------------
+
+    # Reaching this port at all already says something: RSS-Bridge's entrypoint
+    # only moves nginx off port 80 when it is given HTTP_PORT, and that comes
+    # from the env file the role renders. Without it nginx would still be on 80
+    # and the container's published port would refuse the connection.
+    - name: Ask the role's RSS-Bridge for its home page without credentials (up to 5m)
       ansible.builtin.uri:
-        url: "http://localhost:80/"
-        method: GET
-        status_code: [200, 302]
+        url: "{{ rssbridge_verify_url }}/"
         follow_redirects: none
-      register: rssbridge_endpoint
-      until: rssbridge_endpoint.status in [200, 302]
-      retries: 120
+        return_content: true
+        status_code: [401, -1]
+      register: rssbridge_home_anonymous
+      until: rssbridge_home_anonymous.status == 401
+      retries: 60
       delay: 5
 
-    - name: Assert RSS-Bridge HTTP endpoint responds
-      ansible.builtin.assert:
-        that: rssbridge_endpoint.status in [200, 302]
-        fail_msg: "RSS-Bridge did not respond as expected ({{ rssbridge_endpoint.status | default('no response') }})"
-        success_msg: "RSS-Bridge responded with {{ rssbridge_endpoint.status }}"
+    - name: Ask the role's RSS-Bridge for its home page with the wrong password
+      ansible.builtin.uri:
+        url: "{{ rssbridge_verify_url }}/"
+        follow_redirects: none
+        url_username: "{{ rssbridge_config_authentication_username }}"
+        url_password: "not-{{ rssbridge_config_authentication_password }}"
+        force_basic_auth: true
+        status_code: [401]
+      register: rssbridge_home_wrong_password
 
-    - name: Show RSS-Bridge systemd service status summary
+    - name: Ask the role's RSS-Bridge for its home page with the configured credentials
+      ansible.builtin.uri:
+        url: "{{ rssbridge_verify_url }}/"
+        follow_redirects: none
+        return_content: true
+        url_username: "{{ rssbridge_config_authentication_username }}"
+        url_password: "{{ rssbridge_config_authentication_password }}"
+        force_basic_auth: true
+        status_code: [200]
+      register: rssbridge_home
+
+    # The image's own config.default.ini.php and this role's config.ini.php
+    # template are near-copies of one another, so agreeing with the template on
+    # a default would prove nothing. These settings are ones the image ships
+    # differently: authentication off, and no system message.
+    - name: Assert the config.ini.php the role wrote reached the running RSS-Bridge
+      ansible.builtin.assert:
+        that:
+          - rssbridge_home_anonymous.status == 401
+          - rssbridge_verify_auth_challenge in rssbridge_home_anonymous.content
+          # A wrong password is refused, so the password is genuinely compared
+          # rather than authentication merely being switched on.
+          - rssbridge_home_wrong_password.status == 401
+          - rssbridge_home.status == 200
+          # `message` only ever comes from the role's
+          # `rssbridge_config_additional_configurations`.
+          - rssbridge_verify_message in rssbridge_home.content
+        fail_msg: >-
+          The running RSS-Bridge does not reflect the role's config.ini.php:
+          anonymous={{ rssbridge_home_anonymous.status }},
+          wrong password={{ rssbridge_home_wrong_password.status }},
+          authenticated={{ rssbridge_home.status }},
+          message present={{ rssbridge_verify_message in rssbridge_home.content }}
+        success_msg: >-
+          The running RSS-Bridge turns away an anonymous request and a wrong
+          password with 401, serves the configured credentials a home page, and
+          shows the "{{ rssbridge_verify_message }}" banner - so both the
+          templated `[authentication]` settings and the free-form
+          `rssbridge_config_additional_configurations` reached the process
+
+    - name: Ask the role's RSS-Bridge container for its timezone
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - "{{ rssbridge_molecule_container }}"
+          - printenv
+          - TZ
+      register: rssbridge_tz
+      changed_when: false
+
+    - name: Assert the env file the role wrote reached the container
+      ansible.builtin.assert:
+        that: rssbridge_tz.stdout | trim == rssbridge_environment_variables_tz
+        fail_msg: >-
+          The container's TZ is "{{ rssbridge_tz.stdout | trim }}", not
+          "{{ rssbridge_environment_variables_tz }}", so the role's env file did
+          not reach it
+        success_msg: >-
+          The container's TZ is "{{ rssbridge_tz.stdout | trim }}", and nginx is
+          listening on {{ rssbridge_container_http_port }} rather than 80 - so
+          both `rssbridge_environment_variables_tz` and
+          `rssbridge_environment_variables_additional_variables` reached the
+          container through the role's env file
+
+    # ------------------------------------------------------------------
+    # The additional volume the role mounted is in place
+    # ------------------------------------------------------------------
+
+    - name: Retrieve the feed fixture through the role's RSS-Bridge
+      ansible.builtin.uri:
+        url: "{{ rssbridge_verify_url }}{{ rssbridge_verify_fixture_path }}"
+        follow_redirects: none
+        return_content: true
+        status_code: [200]
+      register: rssbridge_fixture
+
+    - name: Assert the additional volume the role mounted is served
+      ansible.builtin.assert:
+        that: rssbridge_molecule_feed_fixture_channel_title in rssbridge_fixture.content
+        fail_msg: >-
+          {{ rssbridge_verify_fixture_path }} does not serve the fixture, so
+          `rssbridge_container_additional_volumes_custom` did not reach the
+          container: {{ rssbridge_fixture.content | truncate(200) }}
+        success_msg: >-
+          {{ rssbridge_verify_fixture_path }} serves the fixture the role
+          bind-mounted, which the unconfigured image answers 404 for
+
+    # ------------------------------------------------------------------
+    # RSS-Bridge actually generates a feed
+    # ------------------------------------------------------------------
+
+    # The whole point of the application. A 200 on the home page is a page of
+    # static PHP; this runs the request pipeline, the bridge factory, the feed
+    # expander that parses the fetched XML, and the Atom formatter - and the
+    # answer has to contain something that could only have come from the
+    # fixture. The fetch stays on the container's own loopback, so no
+    # third-party website is involved.
+    - name: Ask RSS-Bridge to turn the fixture into an Atom feed
+      ansible.builtin.uri:
+        url: "{{ rssbridge_verify_feed_url }}"
+        follow_redirects: none
+        return_content: true
+        url_username: "{{ rssbridge_config_authentication_username }}"
+        url_password: "{{ rssbridge_config_authentication_password }}"
+        force_basic_auth: true
+        status_code: [200]
+      register: rssbridge_feed
+
+    - name: Assert RSS-Bridge generated a feed out of the fixture
+      ansible.builtin.assert:
+        that:
+          - "'<feed xmlns=\"http://www.w3.org/2005/Atom\"' in rssbridge_feed.content"
+          # The bridge was given this name as a parameter, so it came back
+          # through the request pipeline rather than out of a static file.
+          - "'<title type=\"text\">' ~ rssbridge_verify_feed_name ~ '</title>' in rssbridge_feed.content"
+          # And these could only have come from fetching and parsing the fixture.
+          - rssbridge_molecule_feed_fixture_item_title in rssbridge_feed.content
+          - "'Proof that the RSS-Bridge feed engine ran' in rssbridge_feed.content"
+        fail_msg: >-
+          RSS-Bridge did not produce an Atom feed carrying the fixture's item:
+          {{ rssbridge_feed.content | truncate(500) }}
+        success_msg: >-
+          RSS-Bridge fetched the fixture over its own loopback and returned an
+          Atom feed named "{{ rssbridge_verify_feed_name }}" carrying
+          "{{ rssbridge_molecule_feed_fixture_item_title }}" - so PHP-FPM,
+          nginx, the bridge factory, the feed expander and the Atom formatter
+          all work
+
+    # ------------------------------------------------------------------
+    # The container runs the image its leaf variable names
+    # ------------------------------------------------------------------
+
+    # `rssbridge_version` is the literal `latest`, and will stay that way for as
+    # long as RSS-Bridge publishes nothing worth pinning (see
+    # bin/compute-next-tag.sh), so the tag the container was created from is the
+    # whole of what the leaf variable can be checked against.
+    #
+    # `latest` moves, so the image is also asked which build it is, and the
+    # running process for the release it reports. They do not agree by
+    # construction - the image labels itself `latest` while the application
+    # reports the last dated upstream release - so each is checked for what it
+    # can say: that the container runs exactly the image the role's variables
+    # name, and that the application knows its own release.
+    - name: Read the image the RSS-Bridge container runs
+      ansible.builtin.command:
+        cmd: "docker image inspect {{ rssbridge_container.Config.Image }}"
+      register: rssbridge_image_raw
+      changed_when: false
+
+    - name: Assert the RSS-Bridge container runs the image the role names
+      vars:
+        rssbridge_image: "{{ (rssbridge_image_raw.stdout | from_json)[0] }}"
+        rssbridge_reported_version: "{{ rssbridge_home.content | regex_search('<p class=\"version\">\\s*([0-9]{4}-[0-9]{2}-[0-9]{2})', '\\1') | default([], true) | first | default('') }}"
+      ansible.builtin.assert:
+        that:
+          - rssbridge_container.Config.Image | split(':') | last == rssbridge_defaults.rssbridge_version
+          # The container is running that image, not some older one that
+          # happens to still carry the name.
+          - rssbridge_container.Image == rssbridge_image.Id
+          - rssbridge_reported_version != ''
+        fail_msg: >-
+          The running RSS-Bridge does not match what the role installs:
+          container image {{ rssbridge_container.Config.Image }} (expected the
+          `{{ rssbridge_defaults.rssbridge_version }}` tag), container running
+          image {{ rssbridge_container.Image }} against {{ rssbridge_image.Id }},
+          process reports "{{ rssbridge_reported_version }}"
+        success_msg: >-
+          The container runs {{ rssbridge_container.Config.Image }}, the tag
+          `rssbridge_version` names (upstream revision
+          {{ rssbridge_image.Config.Labels['org.opencontainers.image.revision'] | default('unknown') }}),
+          and the application inside reports release
+          {{ rssbridge_reported_version }}
+
+    # ------------------------------------------------------------------
+    # Nothing was quietly restarting while all of that was being checked
+    # ------------------------------------------------------------------
+
+    # `Restart=always` means the unit reads `active` while it is crash-looping,
+    # and a loop is what an RSS-Bridge whose entrypoint fails would settle into.
+    # The window starts here, with everything already answering.
+    - name: Sample the restart counter
+      ansible.builtin.systemd_service:
+        name: rssbridge.service
+      register: rssbridge_restarts_before
+
+    # Comfortably longer than the unit's `RestartSec=30`, so a crash loop has to
+    # tick at least once inside the window.
+    - name: Watch the service for 45 seconds
+      ansible.builtin.pause:
+        seconds: 45
+
+    - name: Sample the restart counter again
+      ansible.builtin.systemd_service:
+        name: rssbridge.service
+      register: rssbridge_restarts_after
+
+    - name: Assert the RSS-Bridge service did not restart while it was up
+      ansible.builtin.assert:
+        that: rssbridge_restarts_after.status.NRestarts == rssbridge_restarts_before.status.NRestarts
+        fail_msg: >-
+          rssbridge.service restarted while it was supposedly up
+          ({{ rssbridge_restarts_before.status.NRestarts }} ->
+          {{ rssbridge_restarts_after.status.NRestarts }}), so `active` was
+          hiding a crash loop
+        success_msg: >-
+          rssbridge.service did not restart over 45 seconds of watching
+          (restarts so far: {{ rssbridge_restarts_after.status.NRestarts }})
+
+    - name: Show the RSS-Bridge verification summary
       ansible.builtin.debug:
         msg:
-          - "RSS-Bridge systemd: {{ rssbridge_service.status.ActiveState }}"
-          - "RSS-Bridge HTTP: {{ rssbridge_endpoint.status }}"
+          - "systemd: {{ rssbridge_service.status.ActiveState }}"
+          - >-
+            unconfigured image: home={{ rssbridge_control_home.status }},
+            fixture={{ rssbridge_control_fixture.status }},
+            TZ={{ rssbridge_control_tz.stdout | default('') | trim | default('(unset)', true) }}
+          - >-
+            authentication: anonymous={{ rssbridge_home_anonymous.status }},
+            wrong password={{ rssbridge_home_wrong_password.status }},
+            configured credentials={{ rssbridge_home.status }}
+          - "env file: TZ={{ rssbridge_tz.stdout | trim }}, nginx on {{ rssbridge_container_http_port }}"
+          - "feed: {{ rssbridge_feed.content | length }} bytes of Atom carrying the fixture's item"
+          - "image: {{ rssbridge_container.Config.Image }}"
+          - "restarts: {{ rssbridge_restarts_after.status.NRestarts }}"
