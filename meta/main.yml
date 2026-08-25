@@ -3,7 +3,7 @@ galaxy_info:
   author: Suguru Hirahara
   company: progressiv
   role_name: rssbridge
-  namespace: progressiv
+  namespace: mash
   description: RSS-Bridge
   platforms:
     - name: Debian
