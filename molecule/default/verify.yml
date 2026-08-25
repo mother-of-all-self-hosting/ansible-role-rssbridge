@@ -106,14 +106,18 @@
               - "{{ rssbridge_container.Config.Image }}"
           changed_when: true
 
+        # The status set is deliberately wide, and 401 in particular is
+        # accepted here, so that a control which turns out to be configured
+        # after all is judged by the assertion below rather than dying at this
+        # probe with a status-code mismatch.
         - name: Wait for the unconfigured RSS-Bridge to come up (up to 5m)
           ansible.builtin.uri:
             url: "{{ rssbridge_verify_control_url }}/"
             follow_redirects: none
             return_content: true
-            status_code: [200, -1]
+            status_code: [200, 401, -1]
           register: rssbridge_control_home
-          until: rssbridge_control_home.status == 200
+          until: rssbridge_control_home.status in [200, 401]
           retries: 60
           delay: 5
 
@@ -177,14 +181,18 @@
     # only moves nginx off port 80 when it is given HTTP_PORT, and that comes
     # from the env file the role renders. Without it nginx would still be on 80
     # and the container's published port would refuse the connection.
+    # Each of these three accepts both answers and leaves the judging to the
+    # assertion that follows, so that a configuration which did not arrive
+    # fails there - at the task that says what is wrong - rather than here with
+    # a status-code mismatch.
     - name: Ask the role's RSS-Bridge for its home page without credentials (up to 5m)
       ansible.builtin.uri:
         url: "{{ rssbridge_verify_url }}/"
         follow_redirects: none
         return_content: true
-        status_code: [401, -1]
+        status_code: [200, 401, -1]
       register: rssbridge_home_anonymous
-      until: rssbridge_home_anonymous.status == 401
+      until: rssbridge_home_anonymous.status in [200, 401]
       retries: 60
       delay: 5
 
@@ -195,7 +203,7 @@
         url_username: "{{ rssbridge_config_authentication_username }}"
         url_password: "not-{{ rssbridge_config_authentication_password }}"
         force_basic_auth: true
-        status_code: [401]
+        status_code: [200, 401]
       register: rssbridge_home_wrong_password
 
     - name: Ask the role's RSS-Bridge for its home page with the configured credentials
@@ -206,7 +214,7 @@
         url_username: "{{ rssbridge_config_authentication_username }}"
         url_password: "{{ rssbridge_config_authentication_password }}"
         force_basic_auth: true
-        status_code: [200]
+        status_code: [200, 401]
       register: rssbridge_home
 
     # The image's own config.default.ini.php and this role's config.ini.php
@@ -248,6 +256,9 @@
           - TZ
       register: rssbridge_tz
       changed_when: false
+      # printenv exits non-zero for a variable that is not set, which is a
+      # result rather than an error - the assertion below is what judges it.
+      failed_when: false
 
     - name: Assert the env file the role wrote reached the container
       ansible.builtin.assert:
@@ -272,12 +283,14 @@
         url: "{{ rssbridge_verify_url }}{{ rssbridge_verify_fixture_path }}"
         follow_redirects: none
         return_content: true
-        status_code: [200]
+        status_code: [200, 401, 404]
       register: rssbridge_fixture
 
     - name: Assert the additional volume the role mounted is served
       ansible.builtin.assert:
-        that: rssbridge_molecule_feed_fixture_channel_title in rssbridge_fixture.content
+        that:
+          - rssbridge_fixture.status == 200
+          - rssbridge_molecule_feed_fixture_channel_title in rssbridge_fixture.content
         fail_msg: >-
           {{ rssbridge_verify_fixture_path }} does not serve the fixture, so
           `rssbridge_container_additional_volumes_custom` did not reach the
@@ -304,12 +317,13 @@
         url_username: "{{ rssbridge_config_authentication_username }}"
         url_password: "{{ rssbridge_config_authentication_password }}"
         force_basic_auth: true
-        status_code: [200]
+        status_code: [200, 400, 401, 404, 500, 503]
       register: rssbridge_feed
 
     - name: Assert RSS-Bridge generated a feed out of the fixture
       ansible.builtin.assert:
         that:
+          - rssbridge_feed.status == 200
           - "'<feed xmlns=\"http://www.w3.org/2005/Atom\"' in rssbridge_feed.content"
           # The bridge was given this name as a parameter, so it came back
           # through the request pipeline rather than out of a static file.

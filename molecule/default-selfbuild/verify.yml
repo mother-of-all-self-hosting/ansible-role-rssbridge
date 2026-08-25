@@ -143,14 +143,18 @@
 
     # Reaching this port at all says the role's env file arrived: RSS-Bridge's
     # entrypoint only moves nginx off port 80 when it is given HTTP_PORT.
+    #
+    # Both probes accept either answer and leave the judging to the assertion
+    # that follows, so a configuration which did not arrive fails there rather
+    # than here with a status-code mismatch.
     - name: Ask the self-built RSS-Bridge for its home page without credentials (up to 5m)
       ansible.builtin.uri:
         url: "{{ rssbridge_verify_url }}/"
         follow_redirects: none
         return_content: true
-        status_code: [401, -1]
+        status_code: [200, 401, -1]
       register: rssbridge_home_anonymous
-      until: rssbridge_home_anonymous.status == 401
+      until: rssbridge_home_anonymous.status in [200, 401]
       retries: 60
       delay: 5
 
@@ -162,7 +166,7 @@
         url_username: "{{ rssbridge_config_authentication_username }}"
         url_password: "{{ rssbridge_config_authentication_password }}"
         force_basic_auth: true
-        status_code: [200]
+        status_code: [200, 401]
       register: rssbridge_home
 
     - name: Assert the role's configuration reached the self-built RSS-Bridge
@@ -196,12 +200,13 @@
         url_username: "{{ rssbridge_config_authentication_username }}"
         url_password: "{{ rssbridge_config_authentication_password }}"
         force_basic_auth: true
-        status_code: [200]
+        status_code: [200, 400, 401, 404, 500, 503]
       register: rssbridge_feed
 
     - name: Assert the self-built RSS-Bridge generated a feed out of the fixture
       ansible.builtin.assert:
         that:
+          - rssbridge_feed.status == 200
           - "'<feed xmlns=\"http://www.w3.org/2005/Atom\"' in rssbridge_feed.content"
           - "'<title type=\"text\">' ~ rssbridge_verify_feed_name ~ '</title>' in rssbridge_feed.content"
           - rssbridge_molecule_feed_fixture_item_title in rssbridge_feed.content
