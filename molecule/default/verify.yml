@@ -73,7 +73,7 @@
 
     - name: Read the RSS-Bridge container the role created
       ansible.builtin.command:
-        cmd: "docker inspect {{ rssbridge_molecule_container }}"
+        cmd: "docker container inspect {{ rssbridge_molecule_container }}"
       register: rssbridge_container_raw
       changed_when: false
 
