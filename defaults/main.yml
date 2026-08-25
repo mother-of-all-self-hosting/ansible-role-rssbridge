@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023, 2024 Nikita Chernyi
-# SPDX-FileCopyrightText: 2023-2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023-2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
 # SPDX-FileCopyrightText: 2025 MASH project contributors
 # SPDX-FileCopyrightText: 2025, 2026 Suguru Hirahara
@@ -15,6 +15,24 @@ rssbridge_identifier: rssbridge
 rssbridge_base_path: "/{{ rssbridge_identifier }}"
 rssbridge_config_path: "{{ rssbridge_base_path }}/config"
 
+# RSS-Bridge publishes no version worth pinning.
+#
+# Its container image is rebuilt from `master` continuously, and each rebuild
+# is published as `sha-<short commit hash>` while moving `latest`. The only
+# other tags it carries are dated releases (`2025-08-05`), which upstream cuts
+# a couple of times a year and which `stable` points at. Upstream's own
+# installation instructions hand people `latest`, and the application reports
+# the last dated release whichever of the two it is running, so pinning would
+# buy staleness and nothing else.
+#
+# The `# renovate:` annotation below is therefore inert today: Renovate cannot
+# resolve `latest` to a version and has never opened a pull request for this
+# variable. It stays so that pinning a real version some day is a one-line
+# change, and so that whatever gets pinned is tracked from then on.
+#
+# It is also why this role's own tags are named `v2025.10.7-<release>`: with no
+# upstream version to name a release after, the tags encode its absence and let
+# the release counter carry the information. See `../bin/compute-next-tag.sh`.
 # renovate: datasource=docker depName=rssbridge/rss-bridge
 rssbridge_version: latest
 

@@ -2,5 +2,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>mother-of-all-self-hosting/renovate-config#v1.0.0"
+  ],
+  "packageRules": [
+    {
+      "description": "No //patch-automerge for RSS-Bridge: there is nothing for Renovate to bump, and nothing it could bump would ever be a patch. docker.io/rssbridge/rss-bridge publishes `latest` plus one `sha-<commit>` tag per rebuild from master; its only other tags are dated releases (`2025-08-05`, which `stable` points at) that upstream cuts a couple of times a year. `rssbridge_version` is therefore the literal `latest`, which Renovate cannot resolve to a version - it has never opened a pull request for it - and dated tags yield no patch-level updates under any versioning that parses them. Extending //patch-automerge would be inert, and would imply a guarantee that nothing is asking the Molecule suite for. See defaults/main.yml and bin/compute-next-tag.sh.",
+      "matchManagers": ["custom.regex"],
+      "automerge": false
+    }
   ]
 }
