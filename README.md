@@ -35,3 +35,11 @@ just prek-install-git-pre-commit-hook
 This role supports [Molecule](https://docs.ansible.com/projects/molecule/), an Ansible testing framework designed for developing and testing Ansible collections, playbooks, and roles.
 
 Refer to [this page](./molecule/README.md) for details about how to utilize it.
+
+### Releases
+
+Releases are tagged automatically. Every push to `main` runs [`bin/compute-next-tag.sh`](./bin/compute-next-tag.sh), which derives the tag from [`defaults/main.yml`](defaults/main.yml) and the tags that already exist, rather than from commit messages — so the result does not depend on the order in which changes get merged, and any change that affects the role releases itself.
+
+Tags look like `v<version>-<release>`. RSS-Bridge publishes no version worth pinning (its container image is rebuilt from `master` continuously, and `rssbridge_version` is therefore the literal `latest`), so the version component is the placeholder `2025.10.7` that this repository's tags have always carried, and the release counter carries all of the information. Should upstream ever start publishing versions and this role pin one, the tag series follows the pinned version with no further change. See the comments in the script for the full reasoning.
+
+[`bin/test-compute-next-tag.sh`](./bin/test-compute-next-tag.sh) exercises the computation against throwaway repositories; it runs as a prek hook whenever the script or `defaults/main.yml` changes.
