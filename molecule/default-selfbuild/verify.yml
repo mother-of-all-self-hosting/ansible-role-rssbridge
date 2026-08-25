@@ -79,11 +79,17 @@
       ansible.builtin.set_fact:
         rssbridge_container: "{{ (rssbridge_container_raw.stdout | from_json)[0] }}"
 
+    # A missing image, and a missing source tree, are answers rather than
+    # errors: they are exactly what a role that never self-built would leave
+    # behind. The assertion below is what judges them, so that turning
+    # self-building off fails there - at the task that says what was expected -
+    # rather than here.
     - name: Read the image the RSS-Bridge container runs
       ansible.builtin.command:
         cmd: "docker image inspect {{ rssbridge_molecule_selfbuild_image }}"
       register: rssbridge_image_raw
       changed_when: false
+      failed_when: false
 
     # ansible.builtin.git clones and checks out; it cannot report on a checkout
     # that already exists, which is what these two need.
@@ -92,12 +98,14 @@
         cmd: "git -C {{ rssbridge_molecule_selfbuild_src_path }} config --get remote.origin.url"
       register: rssbridge_selfbuild_origin
       changed_when: false
+      failed_when: false
 
     - name: Read the commit the role built from  # noqa: command-instead-of-module
       ansible.builtin.command:
         cmd: "git -C {{ rssbridge_molecule_selfbuild_src_path }} rev-parse HEAD"
       register: rssbridge_selfbuild_commit
       changed_when: false
+      failed_when: false
 
     # This is the assertion the scenario exists for. An image pulled from
     # Docker Hub carries a RepoDigest; one that was built locally cannot,
@@ -107,15 +115,21 @@
     # perfectly happy with.
     - name: Assert the RSS-Bridge container runs an image built here from upstream's source
       vars:
-        rssbridge_image: "{{ (rssbridge_image_raw.stdout | from_json)[0] }}"
+        # `docker image inspect` prints `[]` and exits non-zero for an image
+        # that is not there, so the lookup is guarded. Conditions are evaluated
+        # in order and the first false one ends the assertion, which keeps the
+        # ones below from being reached with nothing to read.
+        rssbridge_image: "{{ (rssbridge_image_raw.stdout | from_json)[0] if rssbridge_image_raw.rc == 0 else {} }}"
       ansible.builtin.assert:
         that:
+          - rssbridge_image_raw.rc == 0
           - rssbridge_container.Config.Image == rssbridge_molecule_selfbuild_image
           - rssbridge_container.Image == rssbridge_image.Id
           - rssbridge_image.RepoDigests | default([]) | length == 0
           # Upstream's Dockerfile sets this label; a build of anything else
           # would not carry it.
           - rssbridge_image.Config.Labels['repository'] == 'https://github.com/RSS-Bridge/rss-bridge'
+          - rssbridge_selfbuild_origin.rc == 0
           - rssbridge_selfbuild_origin.stdout | trim == rssbridge_defaults.rssbridge_container_image_self_build_repo
           - rssbridge_selfbuild_commit.stdout | trim | length == 40
           # `latest` is not a git ref, so the role builds from `master`. If
@@ -126,11 +140,13 @@
         fail_msg: >-
           The container is not running an image built here from upstream's
           source: container image {{ rssbridge_container.Config.Image }}
-          (expected {{ rssbridge_molecule_selfbuild_image }}), running
-          {{ rssbridge_container.Image }} against {{ rssbridge_image.Id }},
+          (expected {{ rssbridge_molecule_selfbuild_image }}, which
+          {{ 'exists' if rssbridge_image_raw.rc == 0 else 'is not present at all' }}),
+          running {{ rssbridge_container.Image }} against
+          {{ rssbridge_image.Id | default('nothing') }},
           RepoDigests={{ rssbridge_image.RepoDigests | default([]) }},
-          origin={{ rssbridge_selfbuild_origin.stdout | trim }},
-          commit={{ rssbridge_selfbuild_commit.stdout | trim }}
+          origin={{ rssbridge_selfbuild_origin.stdout | trim | default('(no checkout)', true) }},
+          commit={{ rssbridge_selfbuild_commit.stdout | trim | default('(none)', true) }}
         success_msg: >-
           The container runs {{ rssbridge_molecule_selfbuild_image }}, an image
           with no RepoDigest - so it was built here rather than pulled - from
