@@ -76,9 +76,9 @@ jobs:
         working-directory: rssbridge
         run: molecule test --scenario-name ${{ matrix.scenario }}
 
-  # Self-building clones RSS-Bridge and builds its Dockerfile, which only
-  # changes behavior when the version the role installs changes. Branches are
-  # therefore gated on a version bump in defaults/main.yml. There is no
+  # Self-building compiles RSS-Bridge from the tag that `rssbridge_version`
+  # points at, so it only changes behavior when that version changes. Branches
+  # are therefore gated on a version bump in defaults/main.yml. There is no
   # main-branch run at all: automerge only merges branches that are already
   # green, so a main-side rerun would be redundant.
   selfbuild-gate:
