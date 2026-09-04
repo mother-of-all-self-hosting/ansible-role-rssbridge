@@ -361,7 +361,7 @@
       register: rssbridge_image_raw
       changed_when: false
 
-    - name: Assert the RSS-Bridge container runs the image the role names
+    - name: Assert the running RSS-Bridge is the version this role installs
       vars:
         rssbridge_image: "{{ (rssbridge_image_raw.stdout | from_json)[0] }}"
         rssbridge_reported_version: "{{ rssbridge_home.content | regex_search('<p class=\"version\">\\s*([0-9]{4}-[0-9]{2}-[0-9]{2})', '\\1') | default([], true) | first | default('') }}"
@@ -372,18 +372,8 @@
           # happens to still carry the name.
           - rssbridge_container.Image == rssbridge_image.Id
           - rssbridge_reported_version != ''
-        fail_msg: >-
-          The running RSS-Bridge does not match what the role installs:
-          container image {{ rssbridge_container.Config.Image }} (expected the
-          `{{ rssbridge_defaults.rssbridge_version }}` tag), container running
-          image {{ rssbridge_container.Image }} against {{ rssbridge_image.Id }},
-          process reports "{{ rssbridge_reported_version }}"
-        success_msg: >-
-          The container runs {{ rssbridge_container.Config.Image }}, the tag
-          `rssbridge_version` names (upstream revision
-          {{ rssbridge_image.Config.Labels['org.opencontainers.image.revision'] | default('unknown') }}),
-          and the application inside reports release
-          {{ rssbridge_reported_version }}
+        fail_msg: "RSS-Bridge reports {{ rssbridge_reported_version | default('none') }}, expected {{ rssbridge_defaults.rssbridge_version }}"
+        success_msg: "RSS-Bridge reports {{ rssbridge_reported_version }}"
 
     # ------------------------------------------------------------------
     # Nothing was quietly restarting while all of that was being checked
