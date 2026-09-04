@@ -141,7 +141,7 @@
           (expected {{ rssbridge_molecule_selfbuild_image }}, which
           {{ 'exists' if rssbridge_image_raw.rc == 0 else 'is not present at all' }}),
           running {{ rssbridge_container.Image }} against
-          {{ rssbridge_image.Id | default('nothing') }},
+          {{ rssbridge_image.Id | default('none') }},
           RepoDigests={{ rssbridge_image.RepoDigests | default([]) }},
           origin={{ rssbridge_selfbuild_origin.stdout | trim | default('(no checkout)', true) }},
           commit={{ rssbridge_selfbuild_commit.stdout | trim | default('(none)', true) }}
