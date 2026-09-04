@@ -29,12 +29,10 @@
     rssbridge_verify_auth_challenge: Please authenticate in order to access this instance!
 
   tasks:
-    # Only leaf literals may be read out of this - anything Jinja-derived would
-    # be resolved against an empty namespace. `rssbridge_version` and
-    # `rssbridge_container_image_self_build_repo` are both literals; the image
-    # name and the source path the role derives from them are not, which is why
-    # the scenario spells those out in its group_vars.
-    - name: Load the RSS-Bridge role defaults
+    # The role is not included in this playbook, so its defaults are not in
+    # scope. Reading defaults/main.yml directly ties the version assertion
+    # below.
+    - name: Load the role defaults
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
         name: rssbridge_defaults
