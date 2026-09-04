@@ -423,16 +423,16 @@
     - name: Show the RSS-Bridge verification summary
       ansible.builtin.debug:
         msg:
-          - "systemd: {{ rssbridge_service.status.ActiveState }}"
+          - "RSS-Bridge systemd: {{ rssbridge_service.status.ActiveState }}"
           - >-
-            unconfigured image: home={{ rssbridge_control_home.status }},
+            RSS-Bridge unconfigured image: home={{ rssbridge_control_home.status }},
             fixture={{ rssbridge_control_fixture.status }},
             TZ={{ rssbridge_control_tz.stdout | default('') | trim | default('(unset)', true) }}
           - >-
-            authentication: anonymous={{ rssbridge_home_anonymous.status }},
+            RSS-Bridge authentication: anonymous={{ rssbridge_home_anonymous.status }},
             wrong password={{ rssbridge_home_wrong_password.status }},
             configured credentials={{ rssbridge_home.status }}
-          - "env file: TZ={{ rssbridge_tz.stdout | trim }}, nginx on {{ rssbridge_container_http_port }}"
-          - "feed: {{ rssbridge_feed.content | length }} bytes of Atom carrying the fixture's item"
-          - "image: {{ rssbridge_container.Config.Image }}"
-          - "restarts: {{ rssbridge_restarts_after.status.NRestarts }}"
+          - "RSS-Bridge env file: TZ={{ rssbridge_tz.stdout | trim }}, nginx on {{ rssbridge_container_http_port }}"
+          - "RSS-Bridge feed: {{ rssbridge_feed.content | length }} bytes of Atom carrying the fixture's item"
+          - "RSS-Bridge image: {{ rssbridge_container.Config.Image }}"
+          - "RSS-Bridge restarts: {{ rssbridge_restarts_after.status.NRestarts }}"

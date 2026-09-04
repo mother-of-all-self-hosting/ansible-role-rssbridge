@@ -268,10 +268,8 @@
     - name: Show the self-built RSS-Bridge verification summary
       ansible.builtin.debug:
         msg:
-          - "systemd: {{ rssbridge_service.status.ActiveState }}"
-          - "image: {{ rssbridge_container.Config.Image }}, built from {{ rssbridge_selfbuild_commit.stdout | trim }}"
-          - >-
-            authentication: anonymous={{ rssbridge_home_anonymous.status }},
-            configured credentials={{ rssbridge_home.status }}
-          - "feed: {{ rssbridge_feed.content | length }} bytes of Atom carrying the fixture's item"
-          - "restarts: {{ rssbridge_restarts_after.status.NRestarts }}"
+          - "RSS-Bridge systemd: {{ rssbridge_service.status.ActiveState }}"
+          - "RSS-Bridge image: {{ rssbridge_container.Config.Image }}, built from {{ rssbridge_selfbuild_commit.stdout | trim }}"
+          - "RSS-Bridge authentication: anonymous={{ rssbridge_home_anonymous.status }}, configured credentials={{ rssbridge_home.status }}"
+          - "RSS-Bridge feed: {{ rssbridge_feed.content | length }} bytes of Atom carrying the fixture's item"
+          - "RSS-Bridge restarts: {{ rssbridge_restarts_after.status.NRestarts }}"
