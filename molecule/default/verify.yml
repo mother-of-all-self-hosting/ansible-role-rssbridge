@@ -70,13 +70,13 @@
         cmd: journalctl -xeu rssbridge.service
       changed_when: false
 
-    - name: Read the RSS-Bridge container the role created
+    - name: Inspect RSS-Bridge container
       ansible.builtin.command:
         cmd: "docker container inspect {{ rssbridge_molecule_container }}"
       register: rssbridge_container_raw
       changed_when: false
 
-    - name: Make sense of the RSS-Bridge container
+    - name: Parse the RSS-Bridge container definition
       ansible.builtin.set_fact:
         rssbridge_container: "{{ (rssbridge_container_raw.stdout | from_json)[0] }}"
 
