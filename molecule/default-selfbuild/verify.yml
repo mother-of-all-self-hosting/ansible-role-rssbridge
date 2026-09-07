@@ -50,14 +50,20 @@
       until: rssbridge_service.status.ActiveState == 'active'
       retries: 36
       delay: 5
+      # So that giving up is reported by the assertion below rather than as a
+      # wall of systemd unit properties.
+      failed_when: false
 
+    # `Restart=always` in the systemd unit means that even a container which crashes
+    # and gets restarted reads as active here, so this is a precondition rather than
+    # a result.
     - name: Assert the RSS-Bridge systemd service is active
       ansible.builtin.assert:
         that: rssbridge_service.status.ActiveState == 'active'
-        fail_msg: "rssbridge.service not active ({{ rssbridge_service.status.ActiveState }})"
+        fail_msg: "rssbridge.service is not active ({{ rssbridge_service.status.ActiveState }})"
         success_msg: "rssbridge.service is active"
 
-    - name: Retrieve the RSS-Bridge service log for debugging
+    - name: Retrieve the RSS-Bridge systemd service log for debugging
       when: rssbridge_debug_service_enabled | bool
       ansible.builtin.command:
         cmd: journalctl -xeu rssbridge.service
