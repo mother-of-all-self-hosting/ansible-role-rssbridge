@@ -73,7 +73,7 @@
     - name: Retrieve the RSS-Bridge systemd service log for debugging
       when: rssbridge_debug_service_enabled | bool
       ansible.builtin.command:
-        cmd: journalctl -xeu rssbridge.service
+        cmd: journalctl --no-pager --output=cat --unit=rssbridge.service
       changed_when: false
 
     - name: Inspect RSS-Bridge container
