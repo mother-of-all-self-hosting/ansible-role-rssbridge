@@ -99,16 +99,11 @@
       block:
         - name: Start an RSS-Bridge with none of the role's configuration
           ansible.builtin.command:
-            argv:
-              - docker
-              - run
-              - --detach
-              - --rm
-              - --name
-              - "{{ rssbridge_verify_control_container }}"
-              - --publish
-              - "127.0.0.1:{{ rssbridge_verify_control_port }}:80"
-              - "{{ rssbridge_container.Config.Image }}"
+            cmd: >-
+              docker run -d --rm
+              --name {{ rssbridge_verify_control_container }}
+              -p 127.0.0.1:{{ rssbridge_verify_control_port }}:80
+              {{ rssbridge_container.Config.Image }}
           changed_when: true
 
         # The status set is deliberately wide, and 401 in particular is
@@ -135,23 +130,14 @@
 
         - name: Ask the unconfigured RSS-Bridge container for its timezone
           ansible.builtin.command:
-            argv:
-              - docker
-              - exec
-              - "{{ rssbridge_verify_control_container }}"
-              - printenv
-              - TZ
+            cmd: docker exec {{ rssbridge_verify_control_container }} printenv TZ
           register: rssbridge_control_tz
           changed_when: false
           failed_when: false
       always:
         - name: Stop the unconfigured RSS-Bridge
           ansible.builtin.command:
-            argv:
-              - docker
-              - rm
-              - --force
-              - "{{ rssbridge_verify_control_container }}"
+            cmd: docker rm --force {{ rssbridge_verify_control_container }}
           changed_when: true
 
     - name: Assert the unconfigured RSS-Bridge shows none of what the role configures
@@ -253,12 +239,7 @@
 
     - name: Ask the role's RSS-Bridge container for its timezone
       ansible.builtin.command:
-        argv:
-          - docker
-          - exec
-          - "{{ rssbridge_molecule_container }}"
-          - printenv
-          - TZ
+        cmd: docker exec {{ rssbridge_molecule_container }} printenv TZ
       register: rssbridge_tz
       changed_when: false
       # printenv exits non-zero for a variable that is not set, which is a
