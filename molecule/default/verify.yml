@@ -25,14 +25,14 @@
     rssbridge_verify_feed_url: >-
       {{ rssbridge_verify_url }}/?action=display&bridge=FeedMergeBridge&format=Atom&feed_name={{ rssbridge_verify_feed_name }}&feed_1={{ rssbridge_verify_internal_fixture_url }}
 
+    rssbridge_verify_message: MASH Molecule RSS-Bridge
+    rssbridge_verify_auth_challenge: Please authenticate in order to access this instance!
+
     # The name carries both the role and the scenario, like the platform does,
     # so a leftover container can never be mistaken for another scenario's.
     rssbridge_verify_control_container: "{{ inventory_hostname }}-negative-control"
     rssbridge_verify_control_port: 8099
     rssbridge_verify_control_url: "http://127.0.0.1:{{ rssbridge_verify_control_port }}"
-
-    rssbridge_verify_message: MASH Molecule RSS-Bridge
-    rssbridge_verify_auth_challenge: Please authenticate in order to access this instance!
 
   tasks:
     - name: Verify that RSS-Bridge works

@@ -18,14 +18,19 @@
   vars:
     rssbridge_verify_url: "http://{{ rssbridge_container_http_host_bind_port }}"
 
+    # The path nginx serves the mounted fixture from, and the URL RSS-Bridge
+    # itself uses to fetch it. That one is on the container's own loopback, on
+    # the port HTTP_PORT moved nginx to - not on the host's published port.
     rssbridge_verify_fixture_path: "{{ rssbridge_molecule_feed_fixture_container_path | regex_replace('^/app', '') }}"
     rssbridge_verify_internal_fixture_url: "http://127.0.0.1:{{ rssbridge_container_http_port }}{{ rssbridge_verify_fixture_path }}"
 
-    rssbridge_verify_feed_name: MASH-Molecule-Selfbuild-Merge
+    # No spaces or reserved characters anywhere in here, so the query string
+    # needs no escaping and stays readable in a failure message.
+    rssbridge_verify_feed_name: MASH-Molecule-Merge
     rssbridge_verify_feed_url: >-
       {{ rssbridge_verify_url }}/?action=display&bridge=FeedMergeBridge&format=Atom&feed_name={{ rssbridge_verify_feed_name }}&feed_1={{ rssbridge_verify_internal_fixture_url }}
 
-    rssbridge_verify_message: MASH Molecule RSS-Bridge (self-built)
+    rssbridge_verify_message: MASH Molecule RSS-Bridge
     rssbridge_verify_auth_challenge: Please authenticate in order to access this instance!
 
   tasks:
