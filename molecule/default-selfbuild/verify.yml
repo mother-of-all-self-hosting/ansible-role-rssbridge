@@ -41,8 +41,6 @@
     # The unit is up
     # ------------------------------------------------------------------
 
-    # Worth little on its own - `Restart=always` makes a crash-looping
-    # container read `active` - and the crash loop is ruled out at the end.
     - name: Wait for the RSS-Bridge systemd service to become active (up to 180s)
       ansible.builtin.systemd_service:
         name: rssbridge.service
