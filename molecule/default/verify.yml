@@ -35,6 +35,8 @@
     rssbridge_verify_auth_challenge: Please authenticate in order to access this instance!
 
   tasks:
+    - name: Verify that RSS-Bridge works
+      block:
     # The role is not included in this playbook, so its defaults are not in
     # scope. Reading defaults/main.yml directly ties the version assertion
     # below.
@@ -413,3 +415,19 @@
           - "RSS-Bridge feed: {{ rssbridge_feed.content | length }} bytes of Atom carrying the fixture's item"
           - "RSS-Bridge image: {{ rssbridge_container.Config.Image }}"
           - "RSS-Bridge restarts: {{ rssbridge_restarts_after.status.NRestarts }}"
+
+      rescue:
+        # Whatever went wrong, the reason is almost always in the systemd service log.
+        - name: Retrieve the RSS-Bridge systemd service log
+          ansible.builtin.command:
+            cmd: journalctl --no-pager --output=cat --unit=rssbridge.service
+          register: rssbridge_service_log
+          changed_when: false
+
+        - name: Show the RSS-Bridge systemd service log
+          ansible.builtin.debug:
+            var: rssbridge_service_log.stdout_lines
+
+        - name: Fail because verification did not pass
+          ansible.builtin.fail:
+            msg: "RSS-Bridge verification failed. The systemd service log is printed above."
