@@ -32,10 +32,6 @@ provisioner:
         # Helper variables
         rssbridge_debug_service_enabled: false
 
-        # The container name the role derives from its identifier.
-        # Role defaults are not in scope in a verify play, so it is spelled out.
-        rssbridge_molecule_container: rssbridge
-
         # A static feed, written by prepare.yml and mounted into the container
         # below, which the RSS-Bridge instance is asked to turn into a feed of
         # its own. Nothing here reaches the public internet: almost every

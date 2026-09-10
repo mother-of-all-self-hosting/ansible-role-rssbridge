@@ -32,10 +32,6 @@ provisioner:
         # Helper variables
         rssbridge_debug_service_enabled: false
 
-        # The container name the role derives from its identifier.
-        # Role defaults are not in scope in a verify play, so it is spelled out.
-        rssbridge_molecule_container: rssbridge
-
         # Where the role clones RSS-Bridge to, and the image name it builds -
         # both derived by the role from `rssbridge_base_path` and
         # `rssbridge_version`. `latest` is not a git ref, so the role builds

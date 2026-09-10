@@ -78,7 +78,7 @@
 
     - name: Inspect RSS-Bridge container
       ansible.builtin.command:
-        cmd: "docker container inspect {{ rssbridge_molecule_container }}"
+        cmd: docker container inspect rssbridge
       register: rssbridge_container_raw
       changed_when: false
 
@@ -239,7 +239,7 @@
 
     - name: Ask the role's RSS-Bridge container for its timezone
       ansible.builtin.command:
-        cmd: docker exec {{ rssbridge_molecule_container }} printenv TZ
+        cmd: docker exec rssbridge printenv TZ
       register: rssbridge_tz
       changed_when: false
       # printenv exits non-zero for a variable that is not set, which is a
