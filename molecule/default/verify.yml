@@ -34,6 +34,10 @@
     rssbridge_verify_control_port: 8099
     rssbridge_verify_control_url: "http://127.0.0.1:{{ rssbridge_verify_control_port }}"
 
+  vars:
+    rssbridge_verify_units:
+      - rssbridge.service
+
   tasks:
     - name: Verify that RSS-Bridge works
       block:
@@ -52,13 +56,14 @@
         # Worth little on its own: the unit is `Restart=always`, so it reads
         # `active` for a container that is crash-looping. It is only the starting
         # gun for everything below, and the crash loop is ruled out at the end.
-        - name: Wait for the RSS-Bridge systemd service to become active (up to 180s)
+        - name: Wait for the RSS-Bridge systemd services to become active (up to 180s each)
           ansible.builtin.systemd_service:
-            name: rssbridge.service
-          register: rssbridge_service
-          until: rssbridge_service.status.ActiveState == 'active'
+            name: "{{ item }}"
+          register: rssbridge_services
+          until: rssbridge_services.status.ActiveState == 'active'
           retries: 36
           delay: 5
+          loop: "{{ rssbridge_verify_units }}"
           # So that giving up is reported by the assertion below rather than as a
           # wall of systemd unit properties.
           failed_when: false
@@ -66,17 +71,20 @@
         # `Restart=always` in the systemd unit means that even a container which crashes
         # and gets restarted reads as active here, so this is a precondition rather than
         # a result.
-        - name: Assert the RSS-Bridge systemd service is active
+        - name: Assert the RSS-Bridge systemd services are active
           ansible.builtin.assert:
-            that: rssbridge_service.status.ActiveState == 'active'
-            fail_msg: "rssbridge.service is not active ({{ rssbridge_service.status.ActiveState }})"
-            success_msg: "rssbridge.service is active"
+            that: rssbridge_services.results | map(attribute='status.ActiveState') | unique | list == ['active']
+            fail_msg: >-
+              Not every service is active:
+              {{ dict(rssbridge_verify_units | zip(rssbridge_services.results | map(attribute='status.ActiveState'))) }}
+            success_msg: "Every systemd service is active"
 
-        - name: Retrieve the RSS-Bridge systemd service log for debugging
+        - name: Retrieve the RSS-Bridge systemd services log for debugging
           when: rssbridge_debug_service_enabled | bool
           ansible.builtin.command:
-            cmd: journalctl --no-pager --output=cat --unit=rssbridge.service
+            cmd: "journalctl --no-pager --output=cat --unit={{ item }}"
           changed_when: false
+          loop: "{{ rssbridge_verify_units }}"
 
         - name: Inspect RSS-Bridge container
           ansible.builtin.command:
@@ -402,7 +410,7 @@
         - name: Show the RSS-Bridge verification summary
           ansible.builtin.debug:
             msg:
-              - "RSS-Bridge systemd: {{ rssbridge_service.status.ActiveState }}"
+              - "RSS-Bridge systemd: {% for unit, state in rssbridge_verify_units | zip(rssbridge_services.results | map(attribute='status.ActiveState')) %}{{ unit }} ({{ state }}){% if not loop.last %}, {% endif %}{% endfor %}"
               - >-
                 RSS-Bridge unconfigured image: home={{ rssbridge_control_home.status }},
                 fixture={{ rssbridge_control_fixture.status }},
