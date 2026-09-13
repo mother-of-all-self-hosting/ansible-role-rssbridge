@@ -31,6 +31,7 @@ provisioner:
       all:
         # Helper variables
         rssbridge_debug_service_enabled: false
+        rssbridge_restarts_check_enabled: true
 
         # Where the role clones RSS-Bridge to, and the image name it builds -
         # both derived by the role from `rssbridge_base_path` and
