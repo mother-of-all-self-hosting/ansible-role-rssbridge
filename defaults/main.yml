@@ -146,6 +146,12 @@ rssbridge_container_extra_arguments: "{{ rssbridge_container_extra_arguments_aut
 rssbridge_container_extra_arguments_auto: []
 rssbridge_container_extra_arguments_custom: []
 
+# A list of extra arguments to pass to the process inside the container
+# Example: ['--SOME_ARGUMENT']
+rssbridge_process_extra_arguments: "{{ rssbridge_process_extra_arguments_auto + rssbridge_process_extra_arguments_custom }}"
+rssbridge_process_extra_arguments_auto: []
+rssbridge_process_extra_arguments_custom: []
+
 # Specifies the value of the `X-XSS-Protection` header
 # Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.
 #
