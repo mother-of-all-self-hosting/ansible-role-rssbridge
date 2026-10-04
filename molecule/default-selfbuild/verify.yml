@@ -124,11 +124,12 @@
           failed_when: false
 
         # This is the assertion the scenario exists for. An image pulled from
-        # Docker Hub carries a RepoDigest; one that was built locally cannot,
-        # because it has never been in a registry. So an empty RepoDigests list is
-        # what tells "the role built this" apart from "the role quietly fell back
-        # to pulling the published image", which every other check here would be
-        # perfectly happy with.
+        # Docker Hub carries the time upstream built it; one that was built
+        # locally was created during this test run. That is what tells "the role
+        # built this" apart from "the role quietly fell back to pulling the
+        # published image", which every other check here would be perfectly happy
+        # with. Repository digests cannot tell the two apart: Docker's containerd
+        # image store records one for local builds too.
         - name: Assert the RSS-Bridge container runs an image built here from upstream's source
           vars:
             # `docker image inspect` prints `[]` and exits non-zero for an image
@@ -141,7 +142,7 @@
               - rssbridge_image_raw.rc == 0
               - rssbridge_container.Config.Image == rssbridge_molecule_selfbuild_image
               - rssbridge_container.Image == rssbridge_image.Id
-              - rssbridge_image.RepoDigests | default([]) | length == 0
+              - (now(utc=true) - (rssbridge_image.Created[:19] | to_datetime('%Y-%m-%dT%H:%M:%S'))).total_seconds() < 3600
               # Upstream's Dockerfile sets this label; a build of anything else
               # would not carry it.
               - rssbridge_image.Config.Labels['repository'] == 'https://github.com/RSS-Bridge/rss-bridge'
@@ -160,12 +161,12 @@
               {{ 'exists' if rssbridge_image_raw.rc == 0 else 'is not present at all' }}),
               running {{ rssbridge_container.Image }} against
               {{ rssbridge_image.Id | default('none') }},
-              RepoDigests={{ rssbridge_image.RepoDigests | default([]) }},
+              created={{ rssbridge_image.Created | default('(no image)') }},
               origin={{ rssbridge_selfbuild_origin.stdout | trim | default('(no checkout)', true) }},
               commit={{ rssbridge_selfbuild_commit.stdout | trim | default('(none)', true) }}
             success_msg: >-
               The container runs {{ rssbridge_molecule_selfbuild_image }}, an image
-              with no RepoDigest - so it was built here rather than pulled - from
+              created during this test run - so it was built here rather than pulled - from
               {{ rssbridge_selfbuild_origin.stdout | trim }} at commit
               {{ rssbridge_selfbuild_commit.stdout | trim }}
 
