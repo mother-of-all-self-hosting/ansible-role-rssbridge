@@ -83,9 +83,16 @@ provisioner:
         # config.ini.php. A repeated section header is how it reaches a setting
         # the template does not template; `message` is rendered into every
         # page, which makes it visible from the outside.
+        #
+        # RSS-Bridge refuses to fetch from reserved addresses such as 127.0.0.1
+        # unless told otherwise, and the feed check below fetches the fixture
+        # over the container's own loopback.
         rssbridge_config_additional_configurations: |
           [system]
           message = "MASH Molecule RSS-Bridge"
+
+          [http]
+          allow_reserved_addresses = true
 
         # Exercises the additional-volumes list while putting the feed fixture
         # somewhere nginx serves it, so RSS-Bridge can fetch it over loopback.

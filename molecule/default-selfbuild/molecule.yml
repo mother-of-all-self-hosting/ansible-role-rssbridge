@@ -83,6 +83,9 @@ provisioner:
           [system]
           message = "MASH Molecule RSS-Bridge (self-built)"
 
+          [http]
+          allow_reserved_addresses = true
+
         rssbridge_container_additional_volumes_custom:
           - type: bind
             src: /var/lib/mash-molecule-rssbridge/molecule-feed.xml
