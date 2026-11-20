@@ -13,17 +13,7 @@
   with_items:
     - { "old": "rssbridge_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
 
-- name: Fail if required RSS-Bridge settings not defined
-  ansible.builtin.fail:
-    msg: >-
-      You need to define a required configuration setting (`{{ item }}`).
-  when: "lookup('vars', item, default='') | string | length == 0"
-  with_items:
-    - rssbridge_uid
-    - rssbridge_gid
-    - rssbridge_hostname
-    - rssbridge_path_prefix
-    - rssbridge_container_network
+# NOTE: Make sure to re-add the task to check configurations if necessary
 
 - name: Run if Traefik is enabled
   when: rssbridge_container_labels_traefik_enabled | bool
