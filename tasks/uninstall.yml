@@ -51,7 +51,7 @@
       failed_when: false
 
     - name: Ensure RSS-Bridge container network does not exist
-      when: rssbridge_container_network_deletion_enabled
+      when: rssbridge_container_network_deletion_enabled and rssbridge_container_network != 'host'
       block:
         - name: Ensure RSS-Bridge container network does not exist via community.docker.docker_network
           when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
